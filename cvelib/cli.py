@@ -66,21 +66,31 @@ pass_config = click.make_pass_decorator(Config)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
-@click.option("-u", "--username", envvar="CVE_USER", required=True, help="User name")
-@click.option("-o", "--org", envvar="CVE_ORG", required=True, help="CNA organization short name")
-@click.option("-a", "--api-key", envvar="CVE_API_KEY", required=True, help="API key")
+@click.option(
+    "-u", "--username", envvar="CVE_USER", required=True, help="User name (env var: CVE_USER)"
+)
+@click.option(
+    "-o",
+    "--org",
+    envvar="CVE_ORG",
+    required=True,
+    help="CNA organization short name (env var: CVE_ORG)",
+)
+@click.option(
+    "-a", "--api-key", envvar="CVE_API_KEY", required=True, help="API key (env var: CVE_API_KEY)"
+)
 @click.option(
     "-e",
     "--env",
     envvar="CVE_ENVIRONMENT",
     default="prod",
     type=click.Choice(["prod", "dev"]),
-    help="Select deployment environment to query.",
+    help="Select deployment environment to query (env var: CVE_ENVIRONMENT)",
 )
 @click.option(
     "--idr-url",
     envvar="CVE_IDR_URL",
-    help="Provide arbitrary URL for the IDR service.",
+    help="Provide arbitrary URL for the IDR service (env var: CVE_IDR_URL)",
 )
 @click.option(
     "-i",
@@ -88,7 +98,7 @@ pass_config = click.make_pass_decorator(Config)
     envvar="CVE_INTERACTIVE",
     default=False,
     is_flag=True,
-    help="Confirm create/update actions before execution.",
+    help="Confirm create/update actions before execution (env var: CVE_INTERACTIVE)",
 )
 @click.pass_context
 def cli(ctx, username, org, api_key, env, idr_url, interactive):
