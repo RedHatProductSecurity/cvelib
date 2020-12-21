@@ -2,6 +2,7 @@ import json
 import re
 import sys
 from datetime import date, datetime
+from functools import wraps
 
 import click
 
@@ -40,6 +41,25 @@ def natural_cve_sort(cve):
     if not cve:
         return []
     return [int(x) for x in cve.split("-")[1:]]
+
+
+def handle_idr_exc(func):
+    """Decorator for catching IDR exceptions and formatting the error message."""
+
+    @wraps(func)
+    def wrapped(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except IdrException as exc:
+            error, _, details = str(exc).partition('; returned error: ')
+            click.secho('ERROR: ', bold=True, nl=False)
+            click.echo(error)
+            if details:
+                click.secho('DETAILS: ', bold=True, nl=False)
+                click.echo(details)
+            sys.exit(1)
+
+    return wrapped
 
 
 class Config:
@@ -125,6 +145,7 @@ def cli(ctx, username, org, api_key, env, idr_url, interactive):
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("count", default=1, type=click.IntRange(min=1))
 @pass_config
+@handle_idr_exc
 def reserve(ctx, random, year, count, print_raw):
     """Reserve one or more CVE IDs.
 
@@ -150,7 +171,7 @@ def reserve(ctx, random, year, count, print_raw):
         click.secho(year, bold=True, nl=False)
         click.echo(".")
         if not click.confirm("This operation cannot be reversed; do you want to continue?"):
-            print("Exiting...")
+            click.echo("Exiting...")
             sys.exit(0)
 
     idr = ctx.init_idr()
@@ -171,6 +192,7 @@ def reserve(ctx, random, year, count, print_raw):
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("cve_id", callback=validate_cve)
 @pass_config
+@handle_idr_exc
 def show_cve(ctx, print_raw, cve_id):
     """Display a specific CVE ID owned by your CNA."""
     idr = ctx.init_idr()
@@ -208,6 +230,7 @@ def show_cve(ctx, print_raw, cve_id):
     "--reserved-gt", type=click.DateTime(), help="Filter by reservation time after timestamp."
 )
 @pass_config
+@handle_idr_exc
 def list_cves(ctx, print_raw, sort_by, **query):
     """Filter and list CVE IDs owned by your CNA."""
     idr = ctx.init_idr()
@@ -256,6 +279,7 @@ def list_cves(ctx, print_raw, sort_by, **query):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @pass_config
+@handle_idr_exc
 def quota(ctx):
     """Display the available quota for your CNA."""
     idr = ctx.init_idr()
@@ -271,6 +295,7 @@ def quota(ctx):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @pass_config
+@handle_idr_exc
 def ping(ctx):
     """Ping the IDR service to see if it is up."""
     idr = ctx.init_idr(raise_exc=False)
