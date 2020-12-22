@@ -44,7 +44,8 @@ Additionial options that have an accompanying environment variable include:
 
 ## CLI Usage
 
-Available options and commands can be displayed by running `cve --help`. The following examples
+Available options and commands can be displayed by running `cve --help`. The following are
+examples of some commonly used operations.
 
 Reserve one CVE ID in the current year (you will be prompted to confirm your action):
 
