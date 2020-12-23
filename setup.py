@@ -23,7 +23,7 @@ setup(
     description="A library and command line interface for the CVE Project services.",
     long_description=readme,
     long_description_content_type="text/markdown",
-    url="TODO",
+    url="https://github.com/RedHatProductSecurity/cvelib",
     author="Red Hat Product Security",
     author_email="secalert@redhat.com",
     license="MIT",
