@@ -4,17 +4,11 @@ A library and command line interface for the CVE Project services.
 
 ## Installation
 
-(These instructions are temporary until this package is published in PyPI.)
-
-On Linux:
-
 ```
-$ git clone <THIS REPO>
-$ cd cvelib
-$ python3 -m venv venv
-$ source venv/bin/activate
-$ pip install -e .
+pip install --user cvelib
 ```
+
+Python version 3.6 or greater is required.
 
 ## CLI Setup and Configuration
 
