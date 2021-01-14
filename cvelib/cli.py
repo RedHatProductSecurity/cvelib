@@ -301,16 +301,23 @@ def list_cves(ctx, print_raw, sort_by, **query):
 @pass_config
 @handle_idr_exc
 def quota(ctx):
-    """Display the available quota for your CNA."""
+    """Display the available CVE ID quota for your CNA.
+
+    \b
+    - "Limit": how many CVE IDs your organization can have in the RESERVED state at once.
+    - "Reserved": the number of CVE IDs that are in the RESERVED state across all years.
+    - "Available": the number of CVE IDs that can be reserved (that is "Limit" - "Available")
+    """
     idr = ctx.init_idr()
     response = idr.quota()
     idr_quota = response.json()
 
     click.echo("CNA quota for ", nl=False)
     click.secho(f"{ctx.org}", bold=True, nl=False)
-    click.echo(f":\t{idr_quota['id_quota']}")
-    click.echo(f"├─ Reserved:\t\t{idr_quota['total_reserved']}")
-    click.echo(f"└─ Available:\t\t{idr_quota['available']}")
+    click.echo(f":")
+    click.echo(f"├─ Limit:\t{idr_quota['id_quota']}")
+    click.echo(f"├─ Reserved:\t{idr_quota['total_reserved']}")
+    click.echo(f"└─ Available:\t{idr_quota['available']}")
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
