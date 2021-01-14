@@ -258,6 +258,10 @@ def list_cves(ctx, print_raw, sort_by, **query):
         return
 
     cves = cve_data["cve_ids"]
+    if not cves:
+        click.echo('No CVEs found...')
+        return
+
     if sort_by:
         key = sort_by.lower()
         if key == "user":
