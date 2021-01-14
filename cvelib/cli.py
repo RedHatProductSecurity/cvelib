@@ -142,11 +142,18 @@ def cli(ctx, username, org, api_key, env, idr_url, interactive):
     help="Reserve CVE ID(s) for a given year.",
     show_default="current year",
 )
+@click.option(
+    "-c",
+    "--owning-cna",
+    callback=validate_year,
+    help="Specify the CNA that should own the reserved CVE ID(s)",
+    show_default="CNA org specified in -o/--org/CVE_ORG",
+)
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("count", default=1, type=click.IntRange(min=1))
 @pass_config
 @handle_idr_exc
-def reserve(ctx, random, year, count, print_raw):
+def reserve(ctx, random, year, owning_cna, count, print_raw):
     """Reserve one or more CVE IDs.
 
     CVE IDs can be reserved one by one (the lowest IDs are reserved first) or in batches of
@@ -157,6 +164,9 @@ def reserve(ctx, random, year, count, print_raw):
     """
     if random and count > 10:
         raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request")
+
+    if not owning_cna:
+        owning_cna = ctx.org
 
     if ctx.interactive:
         click.echo("You are about to reserve ", nl=False)
@@ -169,13 +179,15 @@ def reserve(ctx, random, year, count, print_raw):
             click.secho("1 ", bold=True, nl=False)
             click.echo("CVE ID for year ", nl=False)
         click.secho(year, bold=True, nl=False)
-        click.echo(".")
+        click.echo(' that will be owned by the ', nl=False)
+        click.secho(owning_cna, bold=True, nl=False)
+        click.echo(' CNA org.')
         if not click.confirm("This operation cannot be reversed; do you want to continue?"):
             click.echo("Exiting...")
             sys.exit(0)
 
     idr = ctx.init_idr()
-    response = idr.reserve(count, random, year)
+    response = idr.reserve(count, random, year, owning_cna)
     cve_data = response.json()
 
     if print_raw:

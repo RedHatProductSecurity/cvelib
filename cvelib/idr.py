@@ -52,10 +52,11 @@ class Idr:
     def post(self, path, **kwargs):
         return self.http_request("post", path, **kwargs)
 
-    def reserve(self, count, random, year):
+    def reserve(self, count, random, year, owning_cna):
         params = {
             "cve_year": year,
             "amount": count,
+            "short_name": owning_cna,
         }
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
