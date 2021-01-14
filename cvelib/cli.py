@@ -37,6 +37,14 @@ def print_ts(ts):
     return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%c")
 
 
+def print_cve(cve):
+    click.secho(cve["cve_id"], bold=True)
+    click.echo(f"├─ State:\t{cve['state']}")
+    click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
+    click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
+    click.echo(f"└─ Reserved on:\t{cve['reserved']}")
+
+
 def natural_cve_sort(cve):
     if not cve:
         return []
@@ -195,7 +203,7 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
     else:
         click.echo("Reserved the following CVE ID(s):\n")
         for cve in cve_data["cve_ids"]:
-            click.echo(cve)
+            print_cve(cve)
 
         click.echo(f"\nRemaining quota: {response.headers['CVE-API-REMAINING-QUOTA']}")
 
@@ -214,11 +222,7 @@ def show_cve(ctx, print_raw, cve_id):
     if print_raw:
         click.echo(json.dumps(cve, indent=4, sort_keys=True))
     else:
-        click.secho(cve["cve_id"], bold=True)
-        click.echo(f"├─ State:\t{cve['state']}")
-        click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
-        click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
-        click.echo(f"└─ Reserved on:\t{cve['reserved']}")
+        print_cve(cve)
 
 
 @cli.command(name="list", context_settings=CONTEXT_SETTINGS)
