@@ -34,7 +34,7 @@ def validate_year(ctx, param, value):
 
 
 def print_ts(ts):
-    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%f%z").strftime("%c")
+    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
 
 
 def print_cve(cve):
