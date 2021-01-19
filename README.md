@@ -59,6 +59,40 @@ List all rejected CVEs for year 2018:
 cve list --year 2018 --state reject
 ```
 
+## Development Setup
+
+```bash
+git clone https://github.com/RedHatProductSecurity/cvelib.git
+cd cvelib
+python3 -m venv venv  # Must be Python 3.6 or later
+source venv/bin/activate
+pip install --upgrade pip
+pip install -e .
+pip install tox
+```
+
+This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire
+code base after you make any changes, run:
+
+```bash
+# Reformat code base with Black
+pip install black
+black .
+```
+
+Running tests:
+
+```bash
+# Run all tests and format check (also run as a Github action)
+tox
+# Run format check only
+tox -e black
+# Run tests against Python 3.6 only
+tox -e py36
+# Run a single test against Python 3.6 only
+tox -e py36 -- tests/test_cli.py::test_cve_show
+```
+
 ---
 
 [CVE](https://cve.mitre.org/) is a trademark of [The MITRE Corporation](https://www.mitre.org/).
