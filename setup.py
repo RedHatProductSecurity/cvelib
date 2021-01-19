@@ -5,6 +5,8 @@ requires = [
     "requests>=2.24.0",
 ]
 
+test_requires = ["pytest"]
+
 with open("README.md") as f:
     readme = f.read()
 
@@ -39,6 +41,7 @@ setup(
     include_package_data=True,
     packages=["cvelib"],
     install_requires=requires,
+    tests_require=test_requires,
     entry_points={
         "console_scripts": [
             "cve = cvelib.cli:cli",
