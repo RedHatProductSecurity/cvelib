@@ -59,11 +59,11 @@ def handle_idr_exc(func):
         try:
             return func(*args, **kwargs)
         except IdrException as exc:
-            error, _, details = str(exc).partition('; returned error: ')
-            click.secho('ERROR: ', bold=True, nl=False)
+            error, _, details = str(exc).partition("; returned error: ")
+            click.secho("ERROR: ", bold=True, nl=False)
             click.echo(error)
             if details:
-                click.secho('DETAILS: ', bold=True, nl=False)
+                click.secho("DETAILS: ", bold=True, nl=False)
                 click.echo(details)
             sys.exit(1)
 
@@ -187,9 +187,9 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
             click.secho("1 ", bold=True, nl=False)
             click.echo("CVE ID for year ", nl=False)
         click.secho(year, bold=True, nl=False)
-        click.echo(' that will be owned by the ', nl=False)
+        click.echo(" that will be owned by the ", nl=False)
         click.secho(owning_cna, bold=True, nl=False)
-        click.echo(' CNA org.')
+        click.echo(" CNA org.")
         if not click.confirm("This operation cannot be reversed; do you want to continue?"):
             click.echo("Exiting...")
             sys.exit(0)
@@ -259,7 +259,7 @@ def list_cves(ctx, print_raw, sort_by, **query):
 
     cves = cve_data["cve_ids"]
     if not cves:
-        click.echo('No CVEs found...')
+        click.echo("No CVEs found...")
         return
 
     if sort_by:
