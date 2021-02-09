@@ -40,9 +40,13 @@ def print_ts(ts):
 def print_cve(cve):
     click.secho(cve["cve_id"], bold=True)
     click.echo(f"├─ State:\t{cve['state']}")
-    click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
-    click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
-    click.echo(f"└─ Reserved on:\t{cve['reserved']}")
+    # CVEs reserved by other CNAs will not include information on who requested them and when.
+    if "requested_by" in cve:
+        click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
+        click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
+        click.echo(f"└─ Reserved on:\t{cve['reserved']}")
+    else:
+        click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
 def natural_cve_sort(cve):
