@@ -252,16 +252,14 @@ def show_cve(ctx, print_raw, cve_id):
 @pass_config
 @handle_idr_exc
 def list_cves(ctx, print_raw, sort_by, **query):
-    """Filter and list CVE IDs owned by your CNA."""
+    """Filter and list reserved CVE IDs owned by your CNA."""
     idr = ctx.init_idr()
-    response = idr.list_cves(**query)
-    cve_data = response.json()
+    cves = list(idr.list_cves(**query))
 
     if print_raw:
-        click.echo(json.dumps(cve_data, indent=4, sort_keys=True))
+        click.echo(json.dumps(cves, indent=4, sort_keys=True))
         return
 
-    cves = cve_data["cve_ids"]
     if not cves:
         click.echo("No CVEs found...")
         return
