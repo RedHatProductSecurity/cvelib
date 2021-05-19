@@ -22,4 +22,3 @@ jobs:
         tox_env: [black, py36, py37, py38, py39]
 
     runs-on: ubuntu-latest
-    
