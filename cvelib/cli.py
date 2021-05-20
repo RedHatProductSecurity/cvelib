@@ -157,7 +157,7 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
 @click.option(
     "-c",
     "--owning-cna",
-    callback=validate_year,
+    default="",
     help="Specify the CNA that should own the reserved CVE ID(s)",
     show_default="CNA org specified in -o/--org/CVE_ORG",
 )
