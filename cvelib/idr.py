@@ -49,6 +49,31 @@ class Idr:
     def get(self, path, **kwargs):
         return self.http_request("get", path, **kwargs)
 
+    def get_paged(self, path, page_data_attr, params, **kwargs):
+        """Get data from a paged endpoint.
+
+        CVE Services 1.1.0 added pagination on responses longer than the default page size. For
+        responses smaller than the page size, the pagination attributes like `nextPage` and
+        `pageCount` are not present in the response.
+
+        Responses include the returned data in an attribute named after the resource being
+        queried, identified here as `page_data_attr`.
+
+        This method yields returned data as it is received from each response.
+        """
+        while True:
+            response = self.get(path, params=params, **kwargs)
+            page = response.json()
+
+            yield from page[page_data_attr]
+
+            # On the last page, `nextPage` is set to `null`.
+            next_page = page.get("nextPage")
+            if next_page is not None:
+                params["page"] = next_page
+            else:
+                break
+
     def post(self, path, **kwargs):
         return self.http_request("post", path, **kwargs)
 
@@ -75,7 +100,7 @@ class Idr:
             params["time_reserved.lt"] = reserved_lt.isoformat()
         if reserved_gt:
             params["time_reserved.gt"] = reserved_gt.isoformat()
-        return self.get(f"cve-id", params=params)
+        return self.get_paged(f"cve-id", page_data_attr="cve_ids", params=params)
 
     def quota(self):
         return self.get(f"org/{self.org}/id_quota")
