@@ -17,7 +17,7 @@ def test_cve_show():
         "state": "RESERVED",
         "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.929Z"},
     }
-    with mock.patch("cvelib.cli.Idr.show_cve") as show_cve:
+    with mock.patch("cvelib.cli.CveApi.show_cve") as show_cve:
         show_cve.return_value.json.return_value = cve
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
@@ -70,7 +70,7 @@ def test_cve_list():
             },
         },
     ]
-    with mock.patch("cvelib.cli.Idr.list_cves") as list_cves:
+    with mock.patch("cvelib.cli.CveApi.list_cves") as list_cves:
         list_cves.return_value = cves
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["list"])

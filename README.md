@@ -1,6 +1,6 @@
 # cvelib
 
-A library and command line interface for the CVE Project services.
+A library and a command line interface for the CVE Services API.
 
 ## Installation
 
@@ -12,10 +12,9 @@ Python version 3.6 or greater is required.
 
 ## CLI Setup and Configuration
 
-Currently, the only supported CVE Project service is the CVE ID Reservation (IDR) service. Each
-command executed against IDR requires the user to authenticate. You can provide the
-authentication details with the command (using options `-u/--username`, `-o/--org`, and
-`-a/--api-key`) or set them in the following environment variables:
+Each CLI command executed requires the user to authenticate to the CVE Services API. You can provide
+the authentication details with every command (using options `-u/--username`, `-o/--org`, and
+`-a/--api-key`), or set them in the following environment variables:
 
 ```
 export CVE_USER=margo
@@ -29,12 +28,12 @@ Additionial options that have an accompanying environment variable include:
   (that is, the URL at which the service is available) to interface with. Allowed values: `prod`,
   `dev`.
 
-* `--idr-url` or `CVE_IDR_URL`: allows you to override the URL for the IDR service that would
+* `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE API that would
   otherwise be determined by the deployment environment you selected. This is useful for local
-  testing to point to an IDR instance running on localhost.
+  testing to point to a CVE API instance running on localhost.
 
-* `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action against the IDR service
-  will require confirmation before a request is sent.
+* `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action will require confirmation
+  before a request is sent. 
 
 ## CLI Usage
 

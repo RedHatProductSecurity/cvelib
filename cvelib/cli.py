@@ -6,7 +6,7 @@ from functools import wraps
 
 import click
 
-from .idr import Idr, IdrException
+from .cve_api import CveApi, CveApiError
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
@@ -40,7 +40,7 @@ def print_ts(ts):
 def print_cve(cve):
     click.secho(cve["cve_id"], bold=True)
     click.echo(f"├─ State:\t{cve['state']}")
-    # CVEs reserved by other CNAs will not include information on who requested them and when.
+    # CVEs reserved by other CNAs do not include information on who requested them and when.
     if "requested_by" in cve:
         click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
         click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
@@ -55,14 +55,14 @@ def natural_cve_sort(cve):
     return [int(x) for x in cve.split("-")[1:]]
 
 
-def handle_idr_exc(func):
-    """Decorator for catching IDR exceptions and formatting the error message."""
+def handle_cve_api_error(func):
+    """Decorator for catching CVE API exceptions and formatting the error message."""
 
     @wraps(func)
     def wrapped(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except IdrException as exc:
+        except CveApiError as exc:
             error, _, details = str(exc).partition("; returned error: ")
             click.secho("ERROR: ", bold=True, nl=False)
             click.echo(error)
@@ -75,21 +75,21 @@ def handle_idr_exc(func):
 
 
 class Config:
-    def __init__(self, username, org, api_key, env, idr_url, interactive):
+    def __init__(self, username, org, api_key, env, api_url, interactive):
         self.username = username
         self.org = org
         self.api_key = api_key
         self.env = env
-        self.idr_url = idr_url
+        self.api_url = api_url
         self.interactive = interactive
 
-    def init_idr(self, **kwargs):
-        return Idr(
+    def init_cve_api(self, **kwargs):
+        return CveApi(
             username=self.username,
             org=self.org,
             api_key=self.api_key,
             env=self.env,
-            url=self.idr_url,
+            url=self.api_url,
             **kwargs,
         )
 
@@ -120,9 +120,9 @@ pass_config = click.make_pass_decorator(Config)
     help="Select deployment environment to query (env var: CVE_ENVIRONMENT)",
 )
 @click.option(
-    "--idr-url",
-    envvar="CVE_IDR_URL",
-    help="Provide arbitrary URL for the IDR service (env var: CVE_IDR_URL)",
+    "--api-url",
+    envvar="CVE_API_URL",
+    help="Provide arbitrary URL for the CVE API (env var: CVE_API_URL)",
 )
 @click.option(
     "-i",
@@ -133,9 +133,9 @@ pass_config = click.make_pass_decorator(Config)
     help="Confirm create/update actions before execution (env var: CVE_INTERACTIVE)",
 )
 @click.pass_context
-def cli(ctx, username, org, api_key, env, idr_url, interactive):
-    """A CLI interface for the CVE Project services."""
-    ctx.obj = Config(username, org, api_key, env, idr_url, interactive)
+def cli(ctx, username, org, api_key, env, api_url, interactive):
+    """A CLI interface for the CVE Services API."""
+    ctx.obj = Config(username, org, api_key, env, api_url, interactive)
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
@@ -164,9 +164,9 @@ def cli(ctx, username, org, api_key, env, idr_url, interactive):
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("count", default=1, type=click.IntRange(min=1))
 @pass_config
-@handle_idr_exc
+@handle_cve_api_error
 def reserve(ctx, random, year, owning_cna, count, print_raw):
-    """Reserve one or more CVE IDs.
+    """Reserve one or more CVE IDs. COUNT is the number of CVEs to reserve; defaults to 1.
 
     CVE IDs can be reserved one by one (the lowest IDs are reserved first) or in batches of
     multiple IDs per single request. When reserving multiple IDs, you can request those IDs to be
@@ -198,8 +198,8 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
             click.echo("Exiting...")
             sys.exit(0)
 
-    idr = ctx.init_idr()
-    response = idr.reserve(count, random, year, owning_cna)
+    cve_api = ctx.init_cve_api()
+    response = cve_api.reserve(count, random, year, owning_cna)
     cve_data = response.json()
 
     if print_raw:
@@ -216,11 +216,11 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("cve_id", callback=validate_cve)
 @pass_config
-@handle_idr_exc
+@handle_cve_api_error
 def show_cve(ctx, print_raw, cve_id):
     """Display a specific CVE ID owned by your CNA."""
-    idr = ctx.init_idr()
-    response = idr.show_cve(cve_id=cve_id)
+    cve_api = ctx.init_cve_api()
+    response = cve_api.show_cve(cve_id=cve_id)
     cve = response.json()
 
     if print_raw:
@@ -250,11 +250,11 @@ def show_cve(ctx, print_raw, cve_id):
     "--reserved-gt", type=click.DateTime(), help="Filter by reservation time after timestamp."
 )
 @pass_config
-@handle_idr_exc
+@handle_cve_api_error
 def list_cves(ctx, print_raw, sort_by, **query):
     """Filter and list reserved CVE IDs owned by your CNA."""
-    idr = ctx.init_idr()
-    cves = list(idr.list_cves(**query))
+    cve_api = ctx.init_cve_api()
+    cves = list(cve_api.list_cves(**query))
 
     if print_raw:
         click.echo(json.dumps(cves, indent=4, sort_keys=True))
@@ -301,38 +301,38 @@ def list_cves(ctx, print_raw, sort_by, **query):
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @pass_config
-@handle_idr_exc
+@handle_cve_api_error
 def quota(ctx):
     """Display the available CVE ID quota for your CNA.
 
     \b
     - "Limit": how many CVE IDs your organization can have in the RESERVED state at once.
     - "Reserved": the number of CVE IDs that are in the RESERVED state across all years.
-    - "Available": the number of CVE IDs that can be reserved (that is "Limit" - "Available")
+    - "Available": the number of CVE IDs that can be reserved (that is, "Limit" - "Reserved")
     """
-    idr = ctx.init_idr()
-    response = idr.quota()
-    idr_quota = response.json()
+    cve_api = ctx.init_cve_api()
+    response = cve_api.quota()
+    cve_quota = response.json()
 
     click.echo("CNA quota for ", nl=False)
     click.secho(f"{ctx.org}", bold=True, nl=False)
     click.echo(f":")
-    click.echo(f"├─ Limit:\t{idr_quota['id_quota']}")
-    click.echo(f"├─ Reserved:\t{idr_quota['total_reserved']}")
-    click.echo(f"└─ Available:\t{idr_quota['available']}")
+    click.echo(f"├─ Limit:\t{cve_quota['id_quota']}")
+    click.echo(f"├─ Reserved:\t{cve_quota['total_reserved']}")
+    click.echo(f"└─ Available:\t{cve_quota['available']}")
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
 @pass_config
-@handle_idr_exc
+@handle_cve_api_error
 def ping(ctx):
-    """Ping the IDR service to see if it is up."""
-    idr = ctx.init_idr(raise_exc=False)
-    idr_status = idr.ping()
+    """Ping the CVE Services API to see if it is up."""
+    cve_api = ctx.init_cve_api(raise_exc=False)
+    status = cve_api.ping()
 
-    click.echo("IDR API Status: ", nl=False)
-    if idr_status.ok:
+    click.echo("CVE API Status: ", nl=False)
+    if status.ok:
         click.secho("OK", fg="green")
     else:
-        click.secho(f"NOT OK ({idr_status.status_code})", fg="red")
-    click.echo(f"└─ {idr.url}")
+        click.secho(f"NOT OK ({status.status_code})", fg="red")
+    click.echo(f"└─ {cve_api.url}")

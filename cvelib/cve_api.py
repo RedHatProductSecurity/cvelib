@@ -3,13 +3,13 @@ from urllib.parse import urljoin
 import requests
 
 
-class IdrException(Exception):
-    """Raise when encountering errors returned by the IDR API."""
+class CveApiError(Exception):
+    """Raise when encountering errors returned by the CVE API."""
 
     pass
 
 
-class Idr:
+class CveApi:
     ENVS = {
         "prod": "https://cveawg.mitre.org/api/",
         "dev": "https://cveawg-dev.mitre.org/api/",
@@ -21,7 +21,7 @@ class Idr:
         self.api_key = api_key
         self.url = url or self.ENVS.get(env)
         if not self.url:
-            raise ValueError("Missing URL for IDR")
+            raise ValueError("Missing URL for CVE API")
         self.raise_exc = raise_exc
 
     def http_request(self, method, path, **kwargs):
@@ -41,9 +41,9 @@ class Idr:
                         error = exc.response.json()
                     except ValueError:
                         error = exc.response.content
-                    raise IdrException(f"{exc}; returned error: {error}") from None
+                    raise CveApiError(f"{exc}; returned error: {error}") from None
                 else:
-                    raise IdrException(str(exc)) from None
+                    raise CveApiError(str(exc)) from None
         return response
 
     def get(self, path, **kwargs):
