@@ -135,7 +135,7 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
     ctx.obj = Config(username, org, api_key, env, api_url, interactive)
 
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 @click.option(
     "-r",
     "--random",
@@ -209,7 +209,7 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
         click.echo(f"\nRemaining quota: {response.headers['CVE-API-REMAINING-QUOTA']}")
 
 
-@cli.command(name="show", context_settings=CONTEXT_SETTINGS)
+@cli.command(name="show")
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("cve_id", callback=validate_cve)
 @click.pass_context
@@ -226,7 +226,7 @@ def show_cve(ctx, print_raw, cve_id):
         print_cve(cve)
 
 
-@cli.command(name="list", context_settings=CONTEXT_SETTINGS)
+@cli.command(name="list")
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.option(
     "--sort-by",
@@ -296,7 +296,7 @@ def list_cves(ctx, print_raw, sort_by, **query):
             click.echo(text)
 
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 @click.pass_context
 @handle_cve_api_error
 def quota(ctx):
@@ -319,7 +319,7 @@ def quota(ctx):
     click.echo(f"└─ Available:\t{cve_quota['available']}")
 
 
-@cli.command(context_settings=CONTEXT_SETTINGS)
+@cli.command()
 @click.pass_context
 def ping(ctx):
     """Ping the CVE Services API to see if it is up."""
