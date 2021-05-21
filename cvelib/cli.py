@@ -82,19 +82,16 @@ class Config:
         self.env = env
         self.api_url = api_url
         self.interactive = interactive
+        self.cve_api = self.init_cve_api()
 
-    def init_cve_api(self, **kwargs):
+    def init_cve_api(self):
         return CveApi(
             username=self.username,
             org=self.org,
             api_key=self.api_key,
             env=self.env,
             url=self.api_url,
-            **kwargs,
         )
-
-
-pass_config = click.make_pass_decorator(Config)
 
 
 @click.group(context_settings=CONTEXT_SETTINGS)
@@ -163,7 +160,7 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("count", default=1, type=click.IntRange(min=1))
-@pass_config
+@click.pass_context
 @handle_cve_api_error
 def reserve(ctx, random, year, owning_cna, count, print_raw):
     """Reserve one or more CVE IDs. COUNT is the number of CVEs to reserve; defaults to 1.
@@ -177,10 +174,11 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
     if random and count > 10:
         raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request")
 
+    cve_api = ctx.obj.cve_api
     if not owning_cna:
-        owning_cna = ctx.org
+        owning_cna = cve_api.org
 
-    if ctx.interactive:
+    if ctx.obj.interactive:
         click.echo("You are about to reserve ", nl=False)
         if count > 1:
             click.secho(
@@ -198,7 +196,6 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
             click.echo("Exiting...")
             sys.exit(0)
 
-    cve_api = ctx.init_cve_api()
     response = cve_api.reserve(count, random, year, owning_cna)
     cve_data = response.json()
 
@@ -215,11 +212,11 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
 @cli.command(name="show", context_settings=CONTEXT_SETTINGS)
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("cve_id", callback=validate_cve)
-@pass_config
+@click.pass_context
 @handle_cve_api_error
 def show_cve(ctx, print_raw, cve_id):
     """Display a specific CVE ID owned by your CNA."""
-    cve_api = ctx.init_cve_api()
+    cve_api = ctx.obj.cve_api
     response = cve_api.show_cve(cve_id=cve_id)
     cve = response.json()
 
@@ -249,11 +246,11 @@ def show_cve(ctx, print_raw, cve_id):
 @click.option(
     "--reserved-gt", type=click.DateTime(), help="Filter by reservation time after timestamp."
 )
-@pass_config
+@click.pass_context
 @handle_cve_api_error
 def list_cves(ctx, print_raw, sort_by, **query):
     """Filter and list reserved CVE IDs owned by your CNA."""
-    cve_api = ctx.init_cve_api()
+    cve_api = ctx.obj.cve_api
     cves = list(cve_api.list_cves(**query))
 
     if print_raw:
@@ -300,7 +297,7 @@ def list_cves(ctx, print_raw, sort_by, **query):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@pass_config
+@click.pass_context
 @handle_cve_api_error
 def quota(ctx):
     """Display the available CVE ID quota for your CNA.
@@ -310,7 +307,7 @@ def quota(ctx):
     - "Reserved": the number of CVE IDs that are in the RESERVED state across all years.
     - "Available": the number of CVE IDs that can be reserved (that is, "Limit" - "Reserved")
     """
-    cve_api = ctx.init_cve_api()
+    cve_api = ctx.obj.cve_api
     response = cve_api.quota()
     cve_quota = response.json()
 
@@ -323,16 +320,15 @@ def quota(ctx):
 
 
 @cli.command(context_settings=CONTEXT_SETTINGS)
-@pass_config
-@handle_cve_api_error
+@click.pass_context
 def ping(ctx):
     """Ping the CVE Services API to see if it is up."""
-    cve_api = ctx.init_cve_api(raise_exc=False)
-    status = cve_api.ping()
+    cve_api = ctx.obj.cve_api
+    ok, error_msg = cve_api.ping()
 
-    click.echo("CVE API Status: ", nl=False)
-    if status.ok:
-        click.secho("OK", fg="green")
+    click.echo(f"CVE API Status — {cve_api.url}\n└─ ", nl=False)
+    if ok:
+        click.secho(f"OK", fg="green")
     else:
-        click.secho(f"NOT OK ({status.status_code})", fg="red")
-    click.echo(f"└─ {cve_api.url}")
+        click.secho("ERROR:", bold=True, nl=False)
+        click.echo(f" {error_msg}")

@@ -15,14 +15,13 @@ class CveApi:
         "dev": "https://cveawg-dev.mitre.org/api/",
     }
 
-    def __init__(self, username, org, api_key, env="prod", url=None, raise_exc=True):
+    def __init__(self, username, org, api_key, env="prod", url=None):
         self.username = username
         self.org = org
         self.api_key = api_key
         self.url = url or self.ENVS.get(env)
         if not self.url:
             raise ValueError("Missing URL for CVE API")
-        self.raise_exc = raise_exc
 
     def http_request(self, method, path, **kwargs):
         url = urljoin(self.url, path)
@@ -31,19 +30,25 @@ class CveApi:
             "CVE-API-ORG": self.org,
             "CVE-API-USER": self.username,
         }
-        response = requests.request(method=method, url=url, timeout=60, headers=headers, **kwargs)
-        if self.raise_exc:
-            try:
-                response.raise_for_status()
-            except requests.exceptions.RequestException as exc:
-                if exc.response is not None:
-                    try:
-                        error = exc.response.json()
-                    except ValueError:
-                        error = exc.response.content
-                    raise CveApiError(f"{exc}; returned error: {error}") from None
-                else:
-                    raise CveApiError(str(exc)) from None
+        try:
+            response = requests.request(
+                method=method, url=url, timeout=60, headers=headers, **kwargs
+            )
+        except requests.exceptions.ConnectionError as exc:
+            raise CveApiError(str(exc)) from None
+
+        try:
+            response.raise_for_status()
+        except requests.exceptions.RequestException as exc:
+            if exc.response is not None:
+                try:
+                    error = exc.response.json()
+                except ValueError:
+                    error = exc.response.content
+                raise CveApiError(f"{exc}; returned error: {error}") from None
+            else:
+                raise CveApiError(str(exc)) from None
+
         return response
 
     def get(self, path, **kwargs):
@@ -106,4 +111,13 @@ class CveApi:
         return self.get(f"org/{self.org}/id_quota")
 
     def ping(self):
-        return self.get("health-check")
+        """Check the CVE API status.
+
+        Returns a tuple containing a boolean value of whether the request succeeded and any
+        error message that was emitted if it did not succeed.
+        """
+        try:
+            self.get("health-check")
+        except CveApiError as exc:
+            return False, str(exc)
+        return True, None
