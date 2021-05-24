@@ -27,7 +27,7 @@ def test_cve_show():
             "├─ State:\tRESERVED\n"
             "├─ Owning CNA:\tacme\n"
             "├─ Reserved by:\tjack@example.com (acme)\n"
-            "└─ Reserved on:\t2021-01-14T18:35:17.928Z\n"
+            "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
         )
 
 

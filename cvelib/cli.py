@@ -33,7 +33,7 @@ def validate_year(ctx, param, value):
     return value
 
 
-def print_ts(ts):
+def human_ts(ts):
     return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
 
 
@@ -44,9 +44,28 @@ def print_cve(cve):
     if "requested_by" in cve:
         click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
         click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
-        click.echo(f"└─ Reserved on:\t{cve['reserved']}")
+        click.echo(f"└─ Reserved on:\t{human_ts(cve['reserved'])}")
     else:
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
+
+
+def print_table(lines):
+    """Print tabulated data based on the widths of the longest values in each column."""
+    col_widths = []
+    for item_index in range(len(lines[0])):
+        max_len_value = max(lines, key=lambda x: len(x[item_index]))
+        col_widths.append(len(max_len_value[item_index]))
+
+    for idx, line in enumerate(lines):
+        text = "".join(f"{value:<{width + 3}}" for value, width in zip(line, col_widths)).strip()
+        if idx == 0:
+            click.secho(text, bold=True)
+        else:
+            click.echo(text)
+
+
+def print_json_data(data):
+    click.echo(json.dumps(data, indent=4, sort_keys=True))
 
 
 def natural_cve_sort(cve):
@@ -200,7 +219,7 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
     cve_data = response.json()
 
     if print_raw:
-        click.echo(json.dumps(cve_data, indent=4, sort_keys=True))
+        print_json_data(cve_data)
     else:
         click.echo("Reserved the following CVE ID(s):\n")
         for cve in cve_data["cve_ids"]:
@@ -221,7 +240,7 @@ def show_cve(ctx, print_raw, cve_id):
     cve = response.json()
 
     if print_raw:
-        click.echo(json.dumps(cve, indent=4, sort_keys=True))
+        print_json_data(cve)
     else:
         print_cve(cve)
 
@@ -254,7 +273,7 @@ def list_cves(ctx, print_raw, sort_by, **query):
     cves = list(cve_api.list_cves(**query))
 
     if print_raw:
-        click.echo(json.dumps(cves, indent=4, sort_keys=True))
+        print_json_data(cves)
         return
 
     if not cves:
@@ -280,20 +299,10 @@ def list_cves(ctx, print_raw, sort_by, **query):
                 cve["state"],
                 cve["owning_cna"],
                 f"{cve['requested_by']['user']} ({cve['requested_by']['cna']})",
-                print_ts(cve["reserved"]),
+                human_ts(cve["reserved"]),
             )
         )
-    col_widths = []
-    for item_index in range(len(lines[0])):
-        max_len_value = max(lines, key=lambda x: len(x[item_index]))
-        col_widths.append(len(max_len_value[item_index]))
-
-    for idx, line in enumerate(lines):
-        text = "".join(f"{value:<{width + 3}}" for value, width in zip(line, col_widths)).strip()
-        if idx == 0:
-            click.secho(text, bold=True)
-        else:
-            click.echo(text)
+    print_table(lines)
 
 
 @cli.command()
