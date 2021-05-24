@@ -4,7 +4,7 @@ from click.testing import CliRunner
 
 from cvelib.cli import cli
 
-DEFAULT_OPTS = ["-o test", "-u test", "-a test"]
+DEFAULT_OPTS = ["-o", "test_org", "-u", "test_user", "-a", "test_api_key"]
 
 
 def test_cve_show():
