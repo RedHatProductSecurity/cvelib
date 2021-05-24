@@ -170,18 +170,11 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
     help="Reserve CVE ID(s) for a given year.",
     show_default="current year",
 )
-@click.option(
-    "-c",
-    "--owning-cna",
-    default="",
-    help="Specify the CNA that should own the reserved CVE ID(s)",
-    show_default="CNA org specified in -o/--org/CVE_ORG",
-)
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("count", default=1, type=click.IntRange(min=1))
 @click.pass_context
 @handle_cve_api_error
-def reserve(ctx, random, year, owning_cna, count, print_raw):
+def reserve(ctx, random, year, count, print_raw):
     """Reserve one or more CVE IDs. COUNT is the number of CVEs to reserve; defaults to 1.
 
     CVE IDs can be reserved one by one (the lowest IDs are reserved first) or in batches of
@@ -192,10 +185,6 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
     """
     if random and count > 10:
         raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request")
-
-    cve_api = ctx.obj.cve_api
-    if not owning_cna:
-        owning_cna = cve_api.org
 
     if ctx.obj.interactive:
         click.echo("You are about to reserve ", nl=False)
@@ -209,13 +198,15 @@ def reserve(ctx, random, year, owning_cna, count, print_raw):
             click.echo("CVE ID for year ", nl=False)
         click.secho(year, bold=True, nl=False)
         click.echo(" that will be owned by the ", nl=False)
-        click.secho(owning_cna, bold=True, nl=False)
+        click.secho(ctx.obj.org, bold=True, nl=False)
         click.echo(" CNA org.")
         if not click.confirm("This operation cannot be reversed; do you want to continue?"):
             click.echo("Exiting...")
             sys.exit(0)
+        click.echo()
 
-    response = cve_api.reserve(count, random, year, owning_cna)
+    cve_api = ctx.obj.cve_api
+    response = cve_api.reserve(count, random, year)
     cve_data = response.json()
 
     if print_raw:

@@ -82,11 +82,11 @@ class CveApi:
     def post(self, path, **kwargs):
         return self.http_request("post", path, **kwargs)
 
-    def reserve(self, count, random, year, owning_cna):
+    def reserve(self, count, random, year):
         params = {
             "cve_year": year,
             "amount": count,
-            "short_name": owning_cna,
+            "short_name": self.org,
         }
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
