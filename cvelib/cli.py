@@ -1,6 +1,7 @@
 import json
 import re
 import sys
+from collections import defaultdict
 from datetime import date, datetime
 from functools import wraps
 
@@ -66,6 +67,36 @@ def print_table(lines):
 
 def print_json_data(data):
     click.echo(json.dumps(data, indent=4, sort_keys=True))
+
+
+def print_user(user):
+    name = get_full_name(user)
+    if name:
+        click.echo(f"{name} — ", nl=False)
+    click.echo(user["username"])
+    click.echo(f"├─ Active:\t{bool_to_text(user['active'])}")
+    click.echo(f"├─ Roles:\t{', '.join(user['authority']['active_roles']) or 'None'}")
+
+    # Time values are not returned when creating users; secrets (API tokens) are however.
+    if "time" in user:
+        click.echo(f"├─ Created:\t{human_ts(user['time']['created'])}")
+        click.echo(f"└─ Modified:\t{human_ts(user['time']['modified'])}")
+    elif "secret" in user:
+        click.echo(f"└─ API token:\t{user['secret']}")
+
+
+def get_full_name(user_data):
+    # If no name values are defined on a user, the entire `name` object is not returned in the
+    # user data response; see https://github.com/CVEProject/cve-services/issues/436.
+    name = user_data.get("name", {})
+    if name:
+        return f"{name.get('first', '')} {name.get('last', '')}".strip() or None
+
+
+def bool_to_text(value):
+    if value is None:
+        return "N/A"
+    return "Yes" if value else "No"
 
 
 def natural_cve_sort(cve):
@@ -316,6 +347,236 @@ def quota(ctx, print_raw):
     click.echo(f"├─ Limit:\t{cve_quota['id_quota']}")
     click.echo(f"├─ Reserved:\t{cve_quota['total_reserved']}")
     click.echo(f"└─ Available:\t{cve_quota['available']}")
+
+
+@cli.group(name="user", invoke_without_command=True)
+@click.option(
+    "-u",
+    "--username",
+    default="",
+    help="Specify the user to show.",
+    show_default="Current user specified in -u/--username/CVE_USER",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def show_user(ctx, username, print_raw):
+    """Show information about a user."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    cve_api = ctx.obj.cve_api
+    if not username:
+        username = cve_api.username
+
+    user = cve_api.show_user(username)
+    if print_raw:
+        print_json_data(user)
+    else:
+        print_user(user)
+
+
+@show_user.command()
+@click.option(
+    "-u",
+    "--username",
+    default="",
+    help="Specify the user whose API token should be reset.",
+    show_default="Current user specified in -u/--username/CVE_USER",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def reset_token(ctx, username, print_raw):
+    """Reset a user's personal access token (API token).
+
+    This token is used to authenticate each request to the CVE API.
+    """
+    cve_api = ctx.obj.cve_api
+    if not username:
+        username = cve_api.username
+
+    api_key = cve_api.reset_api_token(username)
+    if print_raw:
+        print_json_data(api_key)
+        return
+
+    click.echo(f"New API token for ", nl=False)
+    click.secho(username, bold=True, nl=False)
+    click.echo(":\n")
+    click.secho(api_key["API-secret"], bold=True)
+    click.echo("\nMake sure to copy your new API token; you won't be able to access it again!")
+
+
+@show_user.command(name="update")
+@click.option(
+    "-u",
+    "--username",
+    default="",
+    required=True,
+    help="Username of the user being updated.",
+    show_default="Current user specified in global -u/--username/CVE_USER",
+)
+@click.option(
+    "--mark-active/--mark-inactive", "active", default=None, help="Mark user as active or inactive."
+)
+@click.option("--new-username", help="Update username.")
+@click.option("--name-first", help="Update first name.")
+@click.option("--name-last", help="Update last name.")
+@click.option("--add-role", help="Add role.", type=click.Choice(CveApi.USER_ROLES))
+@click.option("--remove-role", help="Remove role.", type=click.Choice(CveApi.USER_ROLES))
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def update_user(ctx, username, **opts_data):
+    """Update a user.
+
+    To reset a user's API token, use `cve user reset-token`.
+    """
+    print_raw = opts_data.pop("print_raw")
+    cve_api = ctx.obj.cve_api
+    if not username:
+        username = cve_api.username
+
+    user_updates = {}
+    for opt, value in opts_data.items():
+        if value is not None:
+            if opt.startswith("name"):
+                opt = opt.replace("_", ".")
+            elif opt.endswith("role"):
+                opt = "active_roles." + opt.replace("_role", "")
+            elif opt == "active":
+                # Convert boolean to string since this data is passed as query params
+                value = str(value).lower()
+            user_updates[opt] = value
+
+    if not user_updates:
+        raise click.UsageError("No updates were provided.")
+
+    if ctx.obj.interactive:
+        click.echo("You are about to update the ", nl=False)
+        click.secho(username, bold=True, nl=False)
+        click.echo(" user with the following changes:\n")
+        for key, value in user_updates.items():
+            click.echo(f"- {key}: ", nl=False)
+            click.secho(str(value), bold=True)
+        if not click.confirm("\nDo you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    updated_user = cve_api.update_user(username, **user_updates)
+    if print_raw:
+        print_json_data(updated_user)
+    else:
+        click.echo("User updated.")
+
+
+@show_user.command(name="create")
+@click.option("-u", "--username", default="", required=True, help="Set username.")
+@click.option("--name-first", help="Set first name.")
+@click.option("--name-last", help="Set last name.")
+@click.option(
+    "--role", "roles", help="Set role.", multiple=True, type=click.Choice(CveApi.USER_ROLES)
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def create_user(ctx, username, name_first, name_last, roles, print_raw):
+    """Create a user in your organization.
+
+    Note: Once a user is created, they cannot be removed, only marked as inactive. Only create
+    users when you really need them.
+    """
+    user_data = defaultdict(dict)
+
+    if username:
+        user_data["username"] = username
+
+    if name_first:
+        user_data["name"]["first"] = name_first
+
+    if name_last:
+        user_data["name"]["last"] = name_last
+
+    if roles:
+        user_data["authority"]["active_roles"] = list(roles)
+
+    if ctx.obj.interactive:
+        click.echo("You are about to create the following user under your ", nl=False)
+        click.secho(ctx.obj.org, bold=True, nl=False)
+        click.echo(f" org:\n\nUsername:\t", nl=False)
+        click.secho(username, bold=True)
+        click.echo("Full name:\t", nl=False)
+        click.secho(name_first + name_last or "None", bold=True)
+        click.echo(f"Roles:\t\t", nl=False)
+        click.secho(", ".join(roles) or "None", bold=True)
+        click.echo("\nThis action cannot be undone; created users can only be marked as inactive.")
+        if not click.confirm("Do you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    created_user = cve_api.create_user(**user_data)["created"]
+    if print_raw:
+        print_json_data(created_user)
+        return
+
+    click.echo("Created user:\n")
+    print_user(created_user)
+    click.echo("\nMake sure to copy the returned API token; you won't be able to access it again!")
+
+
+@cli.group(name="org", invoke_without_command=True)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def show_org(ctx, print_raw):
+    """Show information about your organization."""
+    if ctx.invoked_subcommand is not None:
+        return
+
+    cve_api = ctx.obj.cve_api
+    org_data = cve_api.show_org()
+    if print_raw:
+        print_json_data(org_data)
+        return
+
+    click.echo(f"{org_data['name']} — {org_data['short_name']}")
+    click.echo(f"├─ Roles:\t{', '.join(org_data['authority']['active_roles']) or 'None'}")
+    click.echo(f"├─ Created:\t{human_ts(org_data['time']['created'])}")
+    click.echo(f"└─ Modified:\t{human_ts(org_data['time']['modified'])}")
+
+
+@show_org.command()
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def users(ctx, print_raw):
+    """List all users in your organization."""
+    cve_api = ctx.obj.cve_api
+    org_users = list(cve_api.list_users())
+    if print_raw:
+        print_json_data(org_users)
+        return
+
+    lines = []
+    for user in org_users:
+        lines.append(
+            (
+                user["username"],
+                str(get_full_name(user)),
+                ", ".join(user["authority"]["active_roles"]) or "None",
+                bool_to_text(user["active"]),
+                human_ts(user["time"]["created"]),
+                human_ts(user["time"]["modified"]),
+            )
+        )
+    lines.sort(key=lambda x: x[0])  # Sort by username
+    # Add header after sorting
+    lines.insert(0, ("USERNAME", "NAME", "ROLES", "ACTIVE", "CREATED", "MODIFIED"))
+    print_table(lines)
 
 
 @cli.command()
