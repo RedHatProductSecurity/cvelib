@@ -206,8 +206,7 @@ def reserve(ctx, random, year, count, print_raw):
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    response = cve_api.reserve(count, random, year)
-    cve_data = response.json()
+    cve_data, remaining_quota = cve_api.reserve(count, random, year)
 
     if print_raw:
         print_json_data(cve_data)
@@ -216,7 +215,7 @@ def reserve(ctx, random, year, count, print_raw):
         for cve in cve_data["cve_ids"]:
             print_cve(cve)
 
-        click.echo(f"\nRemaining quota: {response.headers['CVE-API-REMAINING-QUOTA']}")
+        click.echo(f"\nRemaining quota: {remaining_quota}")
 
 
 @cli.command(name="show")
@@ -227,8 +226,7 @@ def reserve(ctx, random, year, count, print_raw):
 def show_cve(ctx, print_raw, cve_id):
     """Display a specific CVE ID owned by your CNA."""
     cve_api = ctx.obj.cve_api
-    response = cve_api.show_cve(cve_id=cve_id)
-    cve = response.json()
+    cve = cve_api.show_cve(cve_id=cve_id)
 
     if print_raw:
         print_json_data(cve)
@@ -308,11 +306,10 @@ def quota(ctx):
     - "Available": the number of CVE IDs that can be reserved (that is, "Limit" - "Reserved")
     """
     cve_api = ctx.obj.cve_api
-    response = cve_api.quota()
-    cve_quota = response.json()
+    cve_quota = cve_api.quota()
 
     click.echo("CNA quota for ", nl=False)
-    click.secho(f"{ctx.org}", bold=True, nl=False)
+    click.secho(f"{ctx.obj.org}", bold=True, nl=False)
     click.echo(f":")
     click.echo(f"├─ Limit:\t{cve_quota['id_quota']}")
     click.echo(f"├─ Reserved:\t{cve_quota['total_reserved']}")

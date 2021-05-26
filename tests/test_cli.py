@@ -18,7 +18,7 @@ def test_cve_show():
         "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.929Z"},
     }
     with mock.patch("cvelib.cli.CveApi.show_cve") as show_cve:
-        show_cve.return_value.json.return_value = cve
+        show_cve.return_value = cve
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
         assert result.exit_code == 0
