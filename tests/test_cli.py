@@ -21,7 +21,7 @@ def test_cve_show():
         show_cve.return_value = cve
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.output
         assert result.output == (
             "CVE-2099-1000\n"
             "├─ State:\tRESERVED\n"
@@ -74,7 +74,7 @@ def test_cve_list():
         list_cves.return_value = cves
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["list"])
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.output
         assert result.output == (
             "CVE ID          STATE      OWNING CNA   REQUESTED BY   RESERVED\n"
             "CVE-2021-3001   RESERVED   acme         bob (acme)     Thu Jan 14 18:32:19 2021\n"
@@ -89,7 +89,7 @@ def test_quota():
         get_quota.return_value = quota
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["quota"])
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.output
         assert result.output == (
             "CNA quota for test_org:\n"
             "├─ Limit:\t100\n"
@@ -123,7 +123,7 @@ def test_reserve():
         reserve.return_value = reserved_cves, 10
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["reserve", "-y", "2021", "2"])
-        assert result.exit_code == 0
+        assert result.exit_code == 0, result.output
         assert result.output == (
             "Reserved the following CVE ID(s):\n"
             "\n"

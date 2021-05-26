@@ -20,7 +20,7 @@ def validate_cve(ctx, param, value):
     if value is None:
         return
     if not CVE_RE.match(value):
-        raise click.BadParameter("invalid CVE ID")
+        raise click.BadParameter("invalid CVE ID.")
     return value
 
 
@@ -29,7 +29,7 @@ def validate_year(ctx, param, value):
         return
     # Hopefully this code won't be around in year 10,000.
     if not re.match(r"^[1-9]\d{3}$", value):
-        raise click.BadParameter("invalid year")
+        raise click.BadParameter("invalid year.")
     return value
 
 
@@ -184,7 +184,7 @@ def reserve(ctx, random, year, count, print_raw):
     For more information, see: "Developer Guide to CVE Services API" (https://git.io/JLcmZ)
     """
     if random and count > 10:
-        raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request")
+        raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request.")
 
     if ctx.obj.interactive:
         click.echo("You are about to reserve ", nl=False)
@@ -207,15 +207,15 @@ def reserve(ctx, random, year, count, print_raw):
 
     cve_api = ctx.obj.cve_api
     cve_data, remaining_quota = cve_api.reserve(count, random, year)
-
     if print_raw:
         print_json_data(cve_data)
-    else:
-        click.echo("Reserved the following CVE ID(s):\n")
-        for cve in cve_data["cve_ids"]:
-            print_cve(cve)
+        return
 
-        click.echo(f"\nRemaining quota: {remaining_quota}")
+    click.echo("Reserved the following CVE ID(s):\n")
+    for cve in cve_data["cve_ids"]:
+        print_cve(cve)
+
+    click.echo(f"\nRemaining quota: {remaining_quota}")
 
 
 @cli.command(name="show")
@@ -227,7 +227,6 @@ def show_cve(ctx, print_raw, cve_id):
     """Display a specific CVE ID owned by your CNA."""
     cve_api = ctx.obj.cve_api
     cve = cve_api.show_cve(cve_id=cve_id)
-
     if print_raw:
         print_json_data(cve)
     else:
@@ -260,7 +259,6 @@ def list_cves(ctx, print_raw, sort_by, **query):
     """Filter and list reserved CVE IDs owned by your CNA."""
     cve_api = ctx.obj.cve_api
     cves = list(cve_api.list_cves(**query))
-
     if print_raw:
         print_json_data(cves)
         return
@@ -295,9 +293,10 @@ def list_cves(ctx, print_raw, sort_by, **query):
 
 
 @cli.command()
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
-def quota(ctx):
+def quota(ctx, print_raw):
     """Display the available CVE ID quota for your CNA.
 
     \b
@@ -307,6 +306,9 @@ def quota(ctx):
     """
     cve_api = ctx.obj.cve_api
     cve_quota = cve_api.quota()
+    if print_raw:
+        print_json_data(cve_quota)
+        return
 
     click.echo("CNA quota for ", nl=False)
     click.secho(f"{ctx.obj.org}", bold=True, nl=False)
