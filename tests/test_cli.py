@@ -81,3 +81,62 @@ def test_cve_list():
             "CVE-2021-3002   PUBLIC     acme         ann (acme)     Thu Jan 14 18:32:57 2021\n"
             "CVE-2021-3003   REJECT     acme         eve (corp)     Thu Jan 14 18:34:50 2021\n"
         )
+
+
+def test_quota():
+    quota = {"id_quota": 100, "total_reserved": 10, "available": 90}
+    with mock.patch("cvelib.cli.CveApi.quota") as get_quota:
+        get_quota.return_value = quota
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["quota"])
+        assert result.exit_code == 0
+        assert result.output == (
+            "CNA quota for test_org:\n"
+            "├─ Limit:\t100\n"
+            "├─ Reserved:\t10\n"
+            "└─ Available:\t90\n"
+        )
+
+
+def test_reserve():
+    reserved_cves = {
+        "cve_ids": [
+            {
+                "requested_by": {"cna": "test_org", "user": "test_user@test_org.com"},
+                "cve_id": "CVE-2021-20001",
+                "cve_year": "2021",
+                "state": "RESERVED",
+                "owning_cna": "test_org",
+                "reserved": "2021-05-24T18:14:34.987Z",
+            },
+            {
+                "requested_by": {"cna": "test_org", "user": "test_user@test_org.com"},
+                "cve_id": "CVE-2021-20002",
+                "cve_year": "2021",
+                "state": "RESERVED",
+                "owning_cna": "test_org",
+                "reserved": "2021-05-24T18:14:34.988Z",
+            },
+        ]
+    }
+    with mock.patch("cvelib.cli.CveApi.reserve") as reserve:
+        reserve.return_value = reserved_cves, 10
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["reserve", "-y", "2021", "2"])
+        assert result.exit_code == 0
+        assert result.output == (
+            "Reserved the following CVE ID(s):\n"
+            "\n"
+            "CVE-2021-20001\n"
+            "├─ State:\tRESERVED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "├─ Reserved by:\ttest_user@test_org.com (test_org)\n"
+            "└─ Reserved on:\tMon May 24 18:14:34 2021\n"
+            "CVE-2021-20002\n"
+            "├─ State:\tRESERVED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "├─ Reserved by:\ttest_user@test_org.com (test_org)\n"
+            "└─ Reserved on:\tMon May 24 18:14:34 2021\n"
+            "\n"
+            "Remaining quota: 10\n"
+        )
