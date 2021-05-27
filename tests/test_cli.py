@@ -140,3 +140,126 @@ def test_reserve():
             "\n"
             "Remaining quota: 10\n"
         )
+
+
+def test_active_user_show():
+    user_data = {
+        "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+        "active": True,
+        "authority": {"active_roles": ["ADMIN"]},
+        "name": {
+            "first": "Test",
+            "last": "User",
+        },
+        "org_UUID": "304d44d8-3dd1-475d-83c1-5cbefb92b780",
+        "time": {"created": "2021-04-22T02:09:08.823Z", "modified": "2021-04-22T02:09:08.823Z"},
+        "username": "test@user",
+    }
+    with mock.patch("cvelib.cli.CveApi.show_user") as show_user:
+        show_user.return_value = user_data
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test User — test@user\n"
+            "├─ Active:\tYes\n"
+            "├─ Roles:\tADMIN\n"
+            "├─ Created:\tThu Apr 22 02:09:08 2021\n"
+            "└─ Modified:\tThu Apr 22 02:09:08 2021\n"
+        )
+
+
+def test_inactive_user_show():
+    user_data = {
+        "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+        "active": False,
+        "authority": {"active_roles": []},
+        "name": {
+            "first": "",
+            "last": "",
+        },
+        "org_UUID": "304d44d8-3dd1-475d-83c1-5cbefb92b780",
+        "time": {"created": "2021-04-22T02:09:08.823Z", "modified": "2021-04-22T02:09:08.823Z"},
+        "username": "test@user",
+    }
+    with mock.patch("cvelib.cli.CveApi.show_user") as show_user:
+        show_user.return_value = user_data
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "test@user\n"
+            "├─ Active:\tNo\n"
+            "├─ Roles:\tNone\n"
+            "├─ Created:\tThu Apr 22 02:09:08 2021\n"
+            "└─ Modified:\tThu Apr 22 02:09:08 2021\n"
+        )
+
+
+def test_reset_token():
+    api_token = {"API-secret": "foo-token"}
+    with mock.patch("cvelib.cli.CveApi.reset_api_token") as reset_api_token:
+        reset_api_token.return_value = api_token
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user", "reset-token"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "New API token for test_user:\n\n"
+            "foo-token\n\n"
+            "Make sure to copy your new API token; you won't be able to access it again!\n"
+        )
+
+
+def test_user_list():
+    users = [
+        {
+            "UUID": "fe12571e-4a47-4272-9cc4-c61802c05356",
+            "active": True,
+            "authority": {"active_roles": ["ADMIN"]},
+            "name": {"first": "Hello", "last": "World"},
+            "org_UUID": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "time": {"created": "2021-05-26T19:27:44.567Z", "modified": "2021-05-26T19:28:52.766Z"},
+            "username": "hello@world",
+        },
+        {
+            "UUID": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
+            "active": False,
+            "authority": {"active_roles": []},
+            "name": {"first": "Foo"},
+            "org_UUID": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "time": {"created": "2021-05-26T19:27:24.366Z", "modified": "2021-05-26T19:32:57.857Z"},
+            "username": "foo",
+        },
+    ]
+    with mock.patch("cvelib.cli.CveApi.list_users") as list_users:
+        list_users.return_value = users
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["org", "users"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "USERNAME      NAME          ROLES   ACTIVE   CREATED                    MODIFIED\n"
+            "foo           Foo           None    No       Wed May 26 19:27:24 2021   Wed May 26 19:32:57 2021\n"
+            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021   Wed May 26 19:28:52 2021\n"
+        )
+
+
+def test_show_org():
+    org = {
+        "UUID": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+        "authority": {"active_roles": ["CNA"]},
+        "name": "Test Org",
+        "policies": {"id_quota": 1000},
+        "short_name": "test_org",
+        "time": {"created": "2021-04-21T02:09:07.389Z", "modified": "2021-04-21T02:09:07.389Z"},
+    }
+    with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
+        show_org.return_value = org
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["org"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test Org — test_org\n"
+            "├─ Roles:\tCNA\n"
+            "├─ Created:\tWed Apr 21 02:09:07 2021\n"
+            "└─ Modified:\tWed Apr 21 02:09:07 2021\n"
+        )

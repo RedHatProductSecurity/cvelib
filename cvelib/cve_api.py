@@ -14,6 +14,7 @@ class CveApi:
         "prod": "https://cveawg.mitre.org/api/",
         "dev": "https://cveawg-dev.mitre.org/api/",
     }
+    USER_ROLES = ("ADMIN",)
 
     def __init__(self, username, org, api_key, env="prod", url=None):
         self.username = username
@@ -82,6 +83,9 @@ class CveApi:
     def post(self, path, **kwargs):
         return self.http_request("post", path, **kwargs)
 
+    def put(self, path, **kwargs):
+        return self.http_request("put", path, **kwargs)
+
     def reserve(self, count, random, year):
         """Reserve a set of CVE IDs.
 
@@ -119,6 +123,24 @@ class CveApi:
 
     def quota(self):
         return self.get(f"org/{self.org}/id_quota").json()
+
+    def show_user(self, username):
+        return self.get(f"org/{self.org}/user/{username}").json()
+
+    def reset_api_token(self, username):
+        return self.put(f"org/{self.org}/user/{username}/reset_secret").json()
+
+    def create_user(self, **user_data):
+        return self.post(f"org/{self.org}/user", json=user_data).json()
+
+    def update_user(self, username, **user_data):
+        return self.put(f"org/{self.org}/user/{username}", params=user_data).json()
+
+    def list_users(self):
+        return self.get_paged(f"org/{self.org}/users", page_data_attr="users", params={})
+
+    def show_org(self):
+        return self.get(f"org/{self.org}").json()
 
     def ping(self):
         """Check the CVE API status.
