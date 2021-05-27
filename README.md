@@ -58,6 +58,33 @@ List all rejected CVEs for year 2018:
 cve list --year 2018 --state reject
 ```
 
+Assuming you have the `ADMIN` role (also called an _Org Admin_), create a new user in your
+organization with:
+
+```
+cve user create -u foo@bar.com --name-first Foo --name-last Bar
+```
+
+Mark a user as inactive (again, assuming you have the `ADMIN` role):
+
+```
+cve user update -u foo@bar.com --mark-inactive
+```
+
+Reset your own API token:
+
+```
+cve user reset-token
+```
+
+List all users in your organization:
+
+```
+cve org users
+```
+
+See `-h/--help` of any command for a complete list of sub-commands and options.
+
 ## Development Setup
 
 ```bash
