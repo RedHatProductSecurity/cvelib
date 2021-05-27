@@ -146,17 +146,21 @@ class Config:
 
 @click.group(context_settings=CONTEXT_SETTINGS)
 @click.option(
-    "-u", "--username", envvar="CVE_USER", required=True, help="User name (env var: CVE_USER)"
+    "-u", "--username", envvar="CVE_USER", required=True, help="Your username (env var: CVE_USER)"
 )
 @click.option(
     "-o",
     "--org",
     envvar="CVE_ORG",
     required=True,
-    help="CNA organization short name (env var: CVE_ORG)",
+    help="Your CNA organization short name (env var: CVE_ORG)",
 )
 @click.option(
-    "-a", "--api-key", envvar="CVE_API_KEY", required=True, help="API key (env var: CVE_API_KEY)"
+    "-a",
+    "--api-key",
+    envvar="CVE_API_KEY",
+    required=True,
+    help="Your API key (env var: CVE_API_KEY)",
 )
 @click.option(
     "-e",
@@ -381,8 +385,8 @@ def show_user(ctx, username, print_raw):
     "-u",
     "--username",
     default="",
-    help="Specify the user whose API token should be reset.",
-    show_default="Current user specified in -u/--username/CVE_USER",
+    help="User whose API token should be reset (only ADMIN role users can update other users).",
+    show_default="Current user specified in global -u/--username/CVE_USER",
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
@@ -414,7 +418,7 @@ def reset_token(ctx, username, print_raw):
     "--username",
     default="",
     required=True,
-    help="Username of the user being updated.",
+    help="Username of the user being updated (only ADMIN role users can update other users).",
     show_default="Current user specified in global -u/--username/CVE_USER",
 )
 @click.option(
@@ -484,6 +488,8 @@ def update_user(ctx, username, **opts_data):
 @handle_cve_api_error
 def create_user(ctx, username, name_first, name_last, roles, print_raw):
     """Create a user in your organization.
+
+    This action is restricted to users with the ADMIN role.
 
     Note: Once a user is created, they cannot be removed, only marked as inactive. Only create
     users when you really need them.
