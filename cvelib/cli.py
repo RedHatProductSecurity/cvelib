@@ -8,6 +8,7 @@ from functools import wraps
 import click
 
 from .cve_api import CveApi, CveApiError
+from . import __version__
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
@@ -182,6 +183,9 @@ class Config:
     default=False,
     is_flag=True,
     help="Confirm create/update actions before execution (env var: CVE_INTERACTIVE)",
+)
+@click.version_option(
+    __version__, "-V", "--version", prog_name="cvelib", message="%(prog)s %(version)s"
 )
 @click.pass_context
 def cli(ctx, username, org, api_key, env, api_url, interactive):
