@@ -2,7 +2,7 @@
 
 A library and command line interface for the CVE Project services.
 
-## Reequirements
+## Requirements
 
 - Python version 3.6 or greater
 - pip
@@ -14,6 +14,8 @@ Universal Installation that should work on Linux, MacOS and Windows.
 ```
 pip install --user cvelib
 ```
+
+For more information on installing Python packages from PyPI, see the [Python Packaging User Guide](https://packaging.python.org/tutorials/installing-packages/#installing-from-pypi).
 
 ## CLI Setup and Configuration
 
@@ -38,7 +40,7 @@ set CVE_ORG=acme
 set CVE_API_KEY=<api_key>
 ```
 
-Additionial options that have an accompanying environment variable include:
+Additional options that have an accompanying environment variable include:
 
 * `-e/--environment` or `CVE_ENVIRONMENT`: allows you to configure the deployment environment
   (that is, the URL at which the service is available) to interface with. Allowed values: `prod`,
