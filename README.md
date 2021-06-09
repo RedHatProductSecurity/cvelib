@@ -2,13 +2,18 @@
 
 A library and command line interface for the CVE Project services.
 
+## Reequirements
+
+- Python version 3.6 or greater
+- pip
+
 ## Installation
+
+Universal Installation that should work on Linux, MacOS and Windows.
 
 ```
 pip install --user cvelib
 ```
-
-Python version 3.6 or greater is required.
 
 ## CLI Setup and Configuration
 
@@ -17,10 +22,20 @@ command executed against IDR requires the user to authenticate. You can provide 
 authentication details with the command (using options `-u/--username`, `-o/--org`, and
 `-a/--api-key`) or set them in the following environment variables:
 
+### Linux & MacOS
+
 ```
 export CVE_USER=margo
 export CVE_ORG=acme
 export CVE_API_KEY=<api_key>
+```
+
+### Windows
+
+```
+set CVE_USER=margo
+set CVE_ORG=acme
+set CVE_API_KEY=<api_key>
 ```
 
 Additionial options that have an accompanying environment variable include:
