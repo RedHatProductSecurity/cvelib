@@ -13,7 +13,6 @@ from . import __version__
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
-    "show_default": True,
     "max_content_width": 100,
 }
 
@@ -198,6 +197,7 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
     "-r",
     "--random",
     default=False,
+    show_default=True,
     is_flag=True,
     help="Reserve multiple CVE IDs non-sequentially.",
 )
@@ -218,7 +218,8 @@ def reserve(ctx, random, year, count, print_raw):
 
     CVE IDs can be reserved one by one (the lowest IDs are reserved first) or in batches of
     multiple IDs per single request. When reserving multiple IDs, you can request those IDs to be
-    generated sequentially or non-sequentially.
+    generated sequentially (default) or non-sequentially (random IDs are selected from your CVE ID
+    range).
 
     For more information, see: "Developer Guide to CVE Services API" (https://git.io/JLcmZ)
     """
@@ -361,7 +362,6 @@ def quota(ctx, print_raw):
 @click.option(
     "-u",
     "--username",
-    default="",
     help="Specify the user to show.",
     show_default="Current user specified in -u/--username/CVE_USER",
 )
@@ -388,7 +388,6 @@ def show_user(ctx, username, print_raw):
 @click.option(
     "-u",
     "--username",
-    default="",
     help="User whose API token should be reset (only ADMIN role users can update other users).",
     show_default="Current user specified in global -u/--username/CVE_USER",
 )
@@ -420,8 +419,6 @@ def reset_token(ctx, username, print_raw):
 @click.option(
     "-u",
     "--username",
-    default="",
-    required=True,
     help="Username of the user being updated (only ADMIN role users can update other users).",
     show_default="Current user specified in global -u/--username/CVE_USER",
 )
@@ -482,8 +479,8 @@ def update_user(ctx, username, **opts_data):
 
 @show_user.command(name="create")
 @click.option("-u", "--username", default="", required=True, help="Set username.")
-@click.option("--name-first", help="Set first name.")
-@click.option("--name-last", help="Set last name.")
+@click.option("--name-first", default="", help="Set first name.")
+@click.option("--name-last", default="", help="Set last name.")
 @click.option(
     "--role", "roles", help="Set role.", multiple=True, type=click.Choice(CveApi.USER_ROLES)
 )
