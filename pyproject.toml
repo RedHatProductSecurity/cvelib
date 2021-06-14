@@ -1,2 +1,10 @@
 [tool.black]
 line-length = 100
+
+[build-system]
+requires = [
+  "setuptools >= 40.9.0",
+  "wheel",
+  "collective.checkdocs",
+]
+build-backend = "setuptools.build_meta"
