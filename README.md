@@ -1,6 +1,6 @@
 # cvelib
 
-A library and command line interface for the CVE Project services.
+A library and a command line interface for the CVE Services API.
 
 ## Requirements
 
@@ -19,10 +19,9 @@ For more information on installing Python packages from PyPI, see the [Python Pa
 
 ## CLI Setup and Configuration
 
-Currently, the only supported CVE Project service is the CVE ID Reservation (IDR) service. Each
-command executed against IDR requires the user to authenticate. You can provide the
-authentication details with the command (using options `-u/--username`, `-o/--org`, and
-`-a/--api-key`) or set them in the following environment variables:
+Each CLI command executed requires the user to authenticate to the CVE Services API. You can provide
+the authentication details with every command (using options `-u/--username`, `-o/--org`, and
+`-a/--api-key`), or set them in the following environment variables:
 
 ### Linux & MacOS
 
@@ -46,12 +45,12 @@ Additional options that have an accompanying environment variable include:
   (that is, the URL at which the service is available) to interface with. Allowed values: `prod`,
   `dev`.
 
-* `--idr-url` or `CVE_IDR_URL`: allows you to override the URL for the IDR service that would
+* `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE API that would
   otherwise be determined by the deployment environment you selected. This is useful for local
-  testing to point to an IDR instance running on localhost.
+  testing to point to a CVE API instance running on localhost.
 
-* `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action against the IDR service
-  will require confirmation before a request is sent.
+* `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action will require confirmation
+  before a request is sent. 
 
 ## CLI Usage
 
@@ -75,6 +74,33 @@ List all rejected CVEs for year 2018:
 ```
 cve list --year 2018 --state reject
 ```
+
+Assuming you have the `ADMIN` role (also called an _Org Admin_), create a new user in your
+organization with:
+
+```
+cve user create -u foo@bar.com --name-first Foo --name-last Bar
+```
+
+Mark a user as inactive (again, assuming you have the `ADMIN` role):
+
+```
+cve user update -u foo@bar.com --mark-inactive
+```
+
+Reset your own API token:
+
+```
+cve user reset-token
+```
+
+List all users in your organization:
+
+```
+cve org users
+```
+
+See `-h/--help` of any command for a complete list of sub-commands and options.
 
 ## Development Setup
 
