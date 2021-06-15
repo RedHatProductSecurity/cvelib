@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.3.0...0.4.0) (Jun 15, 2021)
+
+* Added `cve org` command.
+* Added `cve user` command.
+* Refactored `Idr` interface into a general `CveApi` interface.
+* Fixed error when showing a CVE that is owned by a different CNA.
+
 ## [0.3.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.2.0...0.3.0) (Jan 18, 2021)
 
 * Fixed incorrect parsing of timestamps when using Python 3.6 (#1).
