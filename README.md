@@ -17,6 +17,12 @@ pip install --user cvelib
 
 For more information on installing Python packages from PyPI, see the [Python Packaging User Guide](https://packaging.python.org/tutorials/installing-packages/#installing-from-pypi).
 
+If you are using Windows, pip may not add the path to use the `cve` command to your environment. If it was not added, you will most likely recieve the error:
+
+`cve : The term 'cve' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`
+
+To resolve this error, add the file path for where your `cve.exe` file resides (for example, `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can edit your environment variables by searching *Edit the system environment variables*. 
+
 ## CLI Setup and Configuration
 
 Each CLI command executed requires the user to authenticate to the CVE Services API. You can provide
@@ -31,7 +37,7 @@ export CVE_ORG=acme
 export CVE_API_KEY=<api_key>
 ```
 
-### Windows
+### Windows Command Line
 
 ```
 set CVE_USER=margo
@@ -39,6 +45,13 @@ set CVE_ORG=acme
 set CVE_API_KEY=<api_key>
 ```
 
+### Windows PowerShell
+
+```
+$env:CVE_USER= 'margo'
+$env:CVE_ORG= 'acme'
+$env:CVE_API_KEY= 'api_key'
+```
 Additional options that have an accompanying environment variable include:
 
 * `-e/--environment` or `CVE_ENVIRONMENT`: allows you to configure the deployment environment
