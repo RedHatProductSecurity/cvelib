@@ -21,7 +21,7 @@ If you are using Windows, pip may not add the path to use the `cve` command to y
 
 `cve : The term 'cve' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`
 
-To resolve this error, add the file path for where your `cve.exe` file resides (for example, filepath: `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can edit your environment variables by searching *Edit the system environment variables*. 
+To resolve this error, add the file path for where your `cve.exe` file resides (for example, `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can edit your environment variables by searching *Edit the system environment variables*. 
 
 ## CLI Setup and Configuration
 
