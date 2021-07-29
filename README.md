@@ -17,7 +17,11 @@ pip install --user cvelib
 
 For more information on installing Python packages from PyPI, see the [Python Packaging User Guide](https://packaging.python.org/tutorials/installing-packages/#installing-from-pypi).
 
-If you are using Windows, pip may not add the path to use `cve` to your Environment Variables. If it was not added you will most likely recieve the error `cve : The term 'cve' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`To get rid of this error add the filepath for where your `cve.exe` file resides (ex. filepath: `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your PATH variable. You can edit your environment variables by searching "Edit the system environment variables". 
+If you are using Windows, pip may not add the path to use the `cve` command to your environment. If it was not added, you will most likely recieve the error:
+
+`cve : The term 'cve' is not recognized as the name of a cmdlet, function, script file, or operable program. Check the spelling of the name, or if a path was included, verify that the path is correct and try again.`
+
+To resolve this error, add the file path for where your `cve.exe` file resides (for example, filepath: `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can edit your environment variables by searching *Edit the system environment variables*. 
 
 ## CLI Setup and Configuration
 
