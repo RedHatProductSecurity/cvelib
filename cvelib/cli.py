@@ -74,15 +74,15 @@ def print_user(user):
     if name:
         click.echo(f"{name} — ", nl=False)
     click.echo(user["username"])
+
+    # If this is a newly created user, print out the API token.
+    if "secret" in user:
+        click.echo(f"├─ API token:\t{user['secret']}")
+
     click.echo(f"├─ Active:\t{bool_to_text(user['active'])}")
     click.echo(f"├─ Roles:\t{', '.join(user['authority']['active_roles']) or 'None'}")
-
-    # Time values are not returned when creating users; secrets (API tokens) are however.
-    if "time" in user:
-        click.echo(f"├─ Created:\t{human_ts(user['time']['created'])}")
-        click.echo(f"└─ Modified:\t{human_ts(user['time']['modified'])}")
-    elif "secret" in user:
-        click.echo(f"└─ API token:\t{user['secret']}")
+    click.echo(f"├─ Created:\t{human_ts(user['time']['created'])}")
+    click.echo(f"└─ Modified:\t{human_ts(user['time']['modified'])}")
 
 
 def get_full_name(user_data):
