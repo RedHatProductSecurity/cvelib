@@ -478,7 +478,7 @@ def update_user(ctx, username, **opts_data):
 
 
 @show_user.command(name="create")
-@click.option("-u", "--username", default="", required=True, help="Set username.")
+@click.option("-u", "--username", required=True, help="Set username.")
 @click.option("--name-first", default="", help="Set first name.")
 @click.option("--name-last", default="", help="Set last name.")
 @click.option(
@@ -496,9 +496,7 @@ def create_user(ctx, username, name_first, name_last, roles, print_raw):
     users when you really need them.
     """
     user_data = defaultdict(dict)
-
-    if username:
-        user_data["username"] = username
+    user_data["username"] = username
 
     if name_first:
         user_data["name"]["first"] = name_first
