@@ -284,7 +284,7 @@ def show_cve(ctx, print_raw, cve_id):
 @click.option("--year", callback=validate_year, help="Filter by year.")
 @click.option(
     "--state",
-    type=click.Choice(["reserved", "public", "reject"], case_sensitive=False),
+    type=click.Choice(["reserved", "published", "rejected"], case_sensitive=False),
     help="Filter by reservation state.",
 )
 @click.option(
