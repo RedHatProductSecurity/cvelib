@@ -167,7 +167,7 @@ class Config:
     "--env",
     envvar="CVE_ENVIRONMENT",
     default="prod",
-    type=click.Choice(["prod", "dev"]),
+    type=click.Choice(["prod", "dev", "test"]),
     help="Select deployment environment to query (env var: CVE_ENVIRONMENT)",
 )
 @click.option(
