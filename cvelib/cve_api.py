@@ -12,7 +12,8 @@ class CveApiError(Exception):
 class CveApi:
     ENVS = {
         "prod": "https://cveawg.mitre.org/api/",
-        "dev": "https://cveawg-test.mitre.org/api/",
+        "dev": "https://cveawg-dev.mitre.org/api/",
+        "test": "https://cveawg-test.mitre.org/api/",
     }
     USER_ROLES = ("ADMIN",)
 
