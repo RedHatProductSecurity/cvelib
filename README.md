@@ -159,4 +159,4 @@ tox -e py36 -- tests/test_cli.py::test_cve_show
 
 ---
 
-[CVE](https://cve.mitre.org/) is a trademark of [The MITRE Corporation](https://www.mitre.org/).
+[CVE](https://cve.org) is a registered trademark of [The MITRE Corporation](https://www.mitre.org).
