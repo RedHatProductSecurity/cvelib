@@ -352,7 +352,7 @@ def quota(ctx, print_raw):
 
     click.echo("CNA quota for ", nl=False)
     click.secho(f"{ctx.obj.org}", bold=True, nl=False)
-    click.echo(f":")
+    click.echo(":")
     click.echo(f"├─ Limit:\t{cve_quota['id_quota']}")
     click.echo(f"├─ Reserved:\t{cve_quota['total_reserved']}")
     click.echo(f"└─ Available:\t{cve_quota['available']}")
@@ -408,7 +408,7 @@ def reset_token(ctx, username, print_raw):
         print_json_data(api_key)
         return
 
-    click.echo(f"New API token for ", nl=False)
+    click.echo("New API token for ", nl=False)
     click.secho(username, bold=True, nl=False)
     click.echo(":\n")
     click.secho(api_key["API-secret"], bold=True)
@@ -510,11 +510,11 @@ def create_user(ctx, username, name_first, name_last, roles, print_raw):
     if ctx.obj.interactive:
         click.echo("You are about to create the following user under your ", nl=False)
         click.secho(ctx.obj.org, bold=True, nl=False)
-        click.echo(f" org:\n\nUsername:\t", nl=False)
+        click.echo(" org:\n\nUsername:\t", nl=False)
         click.secho(username, bold=True)
         click.echo("Full name:\t", nl=False)
         click.secho(name_first + name_last or "None", bold=True)
-        click.echo(f"Roles:\t\t", nl=False)
+        click.echo("Roles:\t\t", nl=False)
         click.secho(", ".join(roles) or "None", bold=True)
         click.echo("\nThis action cannot be undone; created users can only be marked as inactive.")
         if not click.confirm("Do you want to continue?"):
@@ -593,7 +593,7 @@ def ping(ctx):
 
     click.echo(f"CVE API Status — {cve_api.url}\n└─ ", nl=False)
     if ok:
-        click.secho(f"OK", fg="green")
+        click.secho("OK", fg="green")
     else:
         click.secho("ERROR:", bold=True, nl=False)
         click.echo(f" {error_msg}")

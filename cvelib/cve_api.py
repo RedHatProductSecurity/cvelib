@@ -120,7 +120,7 @@ class CveApi:
             params["time_reserved.lt"] = reserved_lt.isoformat()
         if reserved_gt:
             params["time_reserved.gt"] = reserved_gt.isoformat()
-        return self.get_paged(f"cve-id", page_data_attr="cve_ids", params=params)
+        return self.get_paged("cve-id", page_data_attr="cve_ids", params=params)
 
     def quota(self):
         return self.get(f"org/{self.org}/id_quota").json()
