@@ -128,7 +128,7 @@ class CveApi:
     def show_user(self, username):
         return self.get(f"org/{self.org}/user/{username}").json()
 
-    def reset_api_token(self, username):
+    def reset_api_key(self, username):
         return self.put(f"org/{self.org}/user/{username}/reset_secret").json()
 
     def create_user(self, **user_data):

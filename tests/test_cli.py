@@ -196,17 +196,17 @@ def test_inactive_user_show():
         )
 
 
-def test_reset_token():
-    api_token = {"API-secret": "foo-token"}
-    with mock.patch("cvelib.cli.CveApi.reset_api_token") as reset_api_token:
-        reset_api_token.return_value = api_token
+def test_reset_key():
+    api_key = {"API-secret": "foo-key"}
+    with mock.patch("cvelib.cli.CveApi.reset_api_key") as reset_api_key:
+        reset_api_key.return_value = api_key
         runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["user", "reset-token"])
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user", "reset-key"])
         assert result.exit_code == 0, result.output
         assert result.output == (
-            "New API token for test_user:\n\n"
-            "foo-token\n\n"
-            "Make sure to copy your new API token; you won't be able to access it again!\n"
+            "New API key for test_user:\n\n"
+            "foo-key\n\n"
+            "Make sure to copy your new API key; you won't be able to access it again!\n"
         )
 
 

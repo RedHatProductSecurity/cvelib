@@ -75,9 +75,9 @@ def print_user(user):
         click.echo(f"{name} — ", nl=False)
     click.echo(user["username"])
 
-    # If this is a newly created user, print out the API token.
+    # If this is a newly created user, print out the API key.
     if "secret" in user:
-        click.echo(f"├─ API token:\t{user['secret']}")
+        click.echo(f"├─ API key:\t{user['secret']}")
 
     click.echo(f"├─ Active:\t{bool_to_text(user['active'])}")
     click.echo(f"├─ Roles:\t{', '.join(user['authority']['active_roles']) or 'None'}")
@@ -388,31 +388,31 @@ def show_user(ctx, username, print_raw):
 @click.option(
     "-u",
     "--username",
-    help="User whose API token should be reset (only ADMIN role users can update other users).",
+    help="User whose API key should be reset (only ADMIN role users can update other users).",
     show_default="Current user specified in global -u/--username/CVE_USER",
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
-def reset_token(ctx, username, print_raw):
-    """Reset a user's personal access token (API token).
+def reset_key(ctx, username, print_raw):
+    """Reset a user's personal access token (API key).
 
-    This token is used to authenticate each request to the CVE API.
+    This API key is used to authenticate each request to the CVE API.
     """
     cve_api = ctx.obj.cve_api
     if not username:
         username = cve_api.username
 
-    api_key = cve_api.reset_api_token(username)
+    api_key = cve_api.reset_api_key(username)
     if print_raw:
         print_json_data(api_key)
         return
 
-    click.echo("New API token for ", nl=False)
+    click.echo("New API key for ", nl=False)
     click.secho(username, bold=True, nl=False)
     click.echo(":\n")
     click.secho(api_key["API-secret"], bold=True)
-    click.echo("\nMake sure to copy your new API token; you won't be able to access it again!")
+    click.echo("\nMake sure to copy your new API key; you won't be able to access it again!")
 
 
 @show_user.command(name="update")
@@ -436,7 +436,7 @@ def reset_token(ctx, username, print_raw):
 def update_user(ctx, username, **opts_data):
     """Update a user.
 
-    To reset a user's API token, use `cve user reset-token`.
+    To reset a user's API key, use `cve user reset-key`.
     """
     print_raw = opts_data.pop("print_raw")
     cve_api = ctx.obj.cve_api
@@ -530,7 +530,7 @@ def create_user(ctx, username, name_first, name_last, roles, print_raw):
 
     click.echo("Created user:\n")
     print_user(created_user)
-    click.echo("\nMake sure to copy the returned API token; you won't be able to access it again!")
+    click.echo("\nMake sure to copy the returned API key; you won't be able to access it again!")
 
 
 @cli.group(name="org", invoke_without_command=True)
