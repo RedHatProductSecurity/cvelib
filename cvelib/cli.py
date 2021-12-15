@@ -161,6 +161,8 @@ class Config:
     envvar="CVE_API_KEY",
     required=True,
     help="Your API key (env var: CVE_API_KEY)",
+    prompt="API key",
+    hide_input=True,
 )
 @click.option(
     "-e",
