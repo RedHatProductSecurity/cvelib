@@ -7,8 +7,8 @@ from functools import wraps
 
 import click
 
-from .cve_api import CveApi, CveApiError
 from . import __version__
+from .cve_api import CveApi, CveApiError
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
