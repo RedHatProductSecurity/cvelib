@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.5.0...0.6.0) (Dec 17, 2021)
+
+* Added prompt for API key if not specified via env var or option (#13).
+* Updated list of environments to include "test".
+* Renamed `reset_token` subcommand to `reset_key`.
+
 ## [0.5.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.4.0...0.5.0) (Oct 25, 2021)
 
 * Fixed API key not being returned when creating a new user (#8).
@@ -23,4 +29,4 @@
 
 ## [0.1.0](https://github.com/RedHatProductSecurity/cvelib/tree/0.1.0) (Dec 23, 2020)
 
-* Initial public release
+* Initial public release.
