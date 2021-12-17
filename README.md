@@ -109,10 +109,10 @@ Mark a user as inactive (again, assuming you have the `ADMIN` role):
 cve user update -u foo@bar.com --mark-inactive
 ```
 
-Reset your own API token:
+Reset your own API key:
 
 ```
-cve user reset-token
+cve user reset-key
 ```
 
 List all users in your organization:
