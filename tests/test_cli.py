@@ -117,7 +117,10 @@ def test_reserve():
                 "owning_cna": "test_org",
                 "reserved": "2021-05-24T18:14:34.988Z",
             },
-        ]
+        ],
+        "meta": {
+            "remaining_quota": 10,
+        },
     }
     with mock.patch("cvelib.cli.CveApi.reserve") as reserve:
         reserve.return_value = reserved_cves, 10
