@@ -90,12 +90,7 @@ class CveApi:
     def reserve(self, count, random, year):
         """Reserve a set of CVE IDs.
 
-        This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota
-        left over. The quota is only returned in an HTTP response header and is not part of the
-        returned data. If the following issue moves that information to the body of the response,
-        this method will be adjusted to return just the body of the response:
-
-        https://github.com/CVEProject/cve-services/issues/427
+        This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota left over.
         """
         params = {
             "cve_year": year,
@@ -105,7 +100,8 @@ class CveApi:
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
         response = self.post("cve-id", params=params)
-        return response.json(), response.headers["CVE-API-REMAINING-QUOTA"]
+        response = response.json()
+        return response, response["meta"]["remaining_quota"]
 
     def show_cve(self, cve_id):
         return self.get(f"cve-id/{cve_id}").json()
