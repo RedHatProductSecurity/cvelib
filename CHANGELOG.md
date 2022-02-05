@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.7.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.6.0...0.7.0) (Feb 6, 2022)
+
+* Reverted commit c1f5edeb2cb1a39dfbab1813a3bc68ae4c04661d, which is (for
+  now) incompatible with the currently available version of CVE Services.
+
 ## [0.6.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.5.0...0.6.0) (Dec 17, 2021)
 
 * Added prompt for API key if not specified via env var or option (#13).
