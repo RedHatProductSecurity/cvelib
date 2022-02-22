@@ -64,7 +64,7 @@ Additional options that have an accompanying environment variable include:
 
 * `-e/--environment` or `CVE_ENVIRONMENT`: allows you to configure the deployment environment
   (that is, the URL at which the service is available) to interface with. Allowed values: `prod`,
-  `dev`.
+  `test`.
 
 * `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE API that would
   otherwise be determined by the deployment environment you selected. This is useful for local
