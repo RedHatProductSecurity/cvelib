@@ -1,3 +1,4 @@
+import json
 from unittest import mock
 
 from click.testing import CliRunner
@@ -80,6 +81,71 @@ def test_cve_list():
             "CVE-2021-3001   RESERVED   acme         bob (acme)     Thu Jan 14 18:32:19 2021\n"
             "CVE-2021-3002   PUBLIC     acme         ann (acme)     Thu Jan 14 18:32:57 2021\n"
             "CVE-2021-3003   REJECT     acme         eve (corp)     Thu Jan 14 18:34:50 2021\n"
+        )
+
+
+def test_cve_create():
+    cve_id = "CVE-2001-0635"
+    cna_dict = {
+        "affected": [
+            {
+                "cpes": ["cpe:/o:redhat:linux:7.1"],
+                "defaultStatus": "affected",
+                "product": "Red Hat Linux",
+                "vendor": "Red Hat",
+            }
+        ],
+        "descriptions": [
+            {
+                "lang": "en",
+                "value": "There would be words here if this was real data.",
+            }
+        ],
+        "providerMetadata": {
+            "orgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "shortName": "test_org",
+        },
+        "references": [
+            {
+                "name": cve_id,
+                "url": f"https://access.redhat.com/security/cve/{cve_id}",
+            },
+            {
+                "name": f"bz#1616605: {cve_id} security flaw",
+                "url": "https://bugzilla.redhat.com/show_bug.cgi?id=1616605",
+            },
+        ],
+    }
+
+    cve_dict = {
+        "containers": {"cna": cna_dict},
+        "cveMetadata": {
+            "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "assignerShortName": "test_org",
+            "cveId": cve_id,
+            "datePublished": "2001-05-02T00:00:00Z",
+            "dateReserved": "2021-06-29T12:33:52.892Z",
+            "requesterUserId": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
+            "state": "PUBLISHED",
+        },
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.0",
+    }
+    cna_text = json.dumps(cna_dict)
+    response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
+
+    with mock.patch("cvelib.cli.CveApi.create") as create:
+        create.return_value = response_dict
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["create", cve_id, "--json", cna_text])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Created the following CVE:\n"
+            "\n"
+            f"{cve_id}\n"
+            "├─ State:\tPUBLISHED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
         )
 
 
