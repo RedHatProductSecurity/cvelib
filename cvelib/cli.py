@@ -41,7 +41,7 @@ def human_ts(ts: str) -> str:
     return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
 
 
-def print_cve(cve: dict) -> None:
+def print_reserved_cve(cve):
     click.secho(cve["cve_id"], bold=True)
     click.echo(f"├─ State:\t{cve['state']}")
     # CVEs reserved by other CNAs do not include information on who requested them and when.
@@ -53,7 +53,14 @@ def print_cve(cve: dict) -> None:
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
-def print_table(lines: list) -> None:
+def print_created_cve(cve):
+    click.secho(cve["cveMetadata"]["cveId"], bold=True)
+    click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
+    click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
+    click.echo(f"└─ Reserved on:\t{human_ts(cve['cveMetadata']['dateReserved'])}")
+
+
+def print_table(lines):
     """Print tabulated data based on the widths of the longest values in each column."""
     col_widths = []
     for item_index in range(len(lines[0])):
@@ -215,6 +222,52 @@ def cli(
 
 
 @cli.command()
+@click.argument("cve_id", type=click.STRING)
+@click.option(
+    "--json",
+    "cve_json_str",
+    required=True,
+    type=click.STRING,
+    help="JSON body of CVE record to create.",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def create(ctx, cve_id, cve_json_str, print_raw):
+    """Create a CVE record for an already-reserved CVE ID like CVE-2022-1234.
+    Will not update if the CVE already exists.
+
+    cve create 'CVE-2022-1234' --json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+
+    See the tests for an example of these required properties, or the JSON schema for all available properties:
+    https://github.com/CVEProject/cve-services/blob/dev/src/controller/cve.controller/cna_container_schema.json
+    """
+    try:
+        cve_json = json.loads(cve_json_str)
+    except json.JSONDecodeError as e:
+        click.echo("CVE data was not valid JSON. Error was:\n")
+        click.secho(e)
+        return
+    if ctx.obj.interactive:
+        click.echo("You are about to create a CVE record for ", nl=False)
+        click.secho(cve_id, bold=True, nl=False)
+        click.echo(" from the following input:\n\n", nl=False)
+        click.secho(cve_json_str, bold=True, nl=False)
+        if not click.confirm("\n\nThis operation cannot be reversed; do you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    response_data = cve_api.create(cve_id, cve_json)
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("Created the following CVE:\n")
+        print_created_cve(response_data["created"])
+
+
+@cli.command()
 @click.option(
     "-r",
     "--random",
@@ -275,7 +328,7 @@ def reserve(ctx: click.Context, random: bool, year: str, count: int, print_raw: 
 
     click.echo("Reserved the following CVE ID(s):\n")
     for cve in cve_data["cve_ids"]:
-        print_cve(cve)
+        print_reserved_cve(cve)
 
     click.echo(f"\nRemaining quota: {remaining_quota}")
 
@@ -292,7 +345,7 @@ def show_cve(ctx: click.Context, print_raw: bool, cve_id: str) -> None:
     if print_raw:
         print_json_data(cve)
     else:
-        print_cve(cve)
+        print_reserved_cve(cve)
 
 
 @cli.command(name="list")
