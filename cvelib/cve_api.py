@@ -87,6 +87,14 @@ class CveApi:
     def put(self, path, **kwargs):
         return self.http_request("put", path, **kwargs)
 
+    def create(self, cve_id, cve_json):
+        """Create a CVE from a JSON object representing the CNA container data."""
+        # Wrap the container data due to an API change
+        cve_json = {"cnaContainer": cve_json}
+        response = self.post(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
     def reserve(self, count, random, year):
         """Reserve a set of CVE IDs.
 
