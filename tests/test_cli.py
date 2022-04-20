@@ -134,13 +134,13 @@ def test_cve_create():
     cna_text = json.dumps(cna_dict)
     response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
 
-    with mock.patch("cvelib.cli.CveApi.create") as create:
-        create.return_value = response_dict
+    with mock.patch("cvelib.cli.CveApi.publish") as publish:
+        publish.return_value = response_dict
         runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["create", cve_id, "--json", cna_text])
+        result = runner.invoke(cli, DEFAULT_OPTS + ["publish", cve_id, "--json", cna_text])
         assert result.exit_code == 0, result.output
         assert result.output == (
-            "Created the following CVE:\n"
+            "Published the following CVE:\n"
             "\n"
             f"{cve_id}\n"
             "├─ State:\tPUBLISHED\n"
