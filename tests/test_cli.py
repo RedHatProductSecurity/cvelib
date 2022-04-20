@@ -307,8 +307,10 @@ def test_user_list():
         assert result.exit_code == 0, result.output
         assert result.output == (
             "USERNAME      NAME          ROLES   ACTIVE   CREATED                    MODIFIED\n"
-            "foo           Foo           None    No       Wed May 26 19:27:24 2021   Wed May 26 19:32:57 2021\n"
-            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021   Wed May 26 19:28:52 2021\n"
+            "foo           Foo           None    No       Wed May 26 19:27:24 2021   "
+            "Wed May 26 19:32:57 2021\n"
+            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021   "
+            "Wed May 26 19:28:52 2021\n"
         )
 
 
