@@ -50,7 +50,7 @@ def print_reserved_cve(cve):
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
-def print_created_cve(cve):
+def print_published_cve(cve):
     click.secho(cve["cveMetadata"]["cveId"], bold=True)
     click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
     click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
@@ -208,19 +208,23 @@ def cli(ctx, username, org, api_key, env, api_url, interactive):
     "cve_json_str",
     required=True,
     type=click.STRING,
-    help="JSON body of CVE record to create.",
+    help="JSON body of CVE record to publish.",
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
-def create(ctx, cve_id, cve_json_str, print_raw):
-    """Create a CVE record for an already-reserved CVE ID like CVE-2022-1234.
-    Will not update if the CVE already exists.
+def publish(ctx, cve_id, cve_json_str, print_raw):
+    """Publish a CVE record for an already-reserved CVE ID.
 
-    cve create 'CVE-2022-1234' --json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+    Will not update if the CVE record is already published.
 
-    See the tests for an example of these required properties, or the JSON schema for all available properties:
-    https://github.com/CVEProject/cve-services/blob/dev/src/controller/cve.controller/cna_container_schema.json
+    \b
+    cve publish 'CVE-2022-1234' --json \\
+    '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+
+    For information on the required properties in a given CVE JSON record, see the
+    `cnaPublishedContainer` schema in:\n
+    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
     """
     try:
         cve_json = json.loads(cve_json_str)
@@ -229,7 +233,7 @@ def create(ctx, cve_id, cve_json_str, print_raw):
         click.secho(e)
         return
     if ctx.obj.interactive:
-        click.echo("You are about to create a CVE record for ", nl=False)
+        click.echo("You are about to publish a CVE record for ", nl=False)
         click.secho(cve_id, bold=True, nl=False)
         click.echo(" from the following input:\n\n", nl=False)
         click.secho(cve_json_str, bold=True, nl=False)
@@ -239,12 +243,12 @@ def create(ctx, cve_id, cve_json_str, print_raw):
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    response_data = cve_api.create(cve_id, cve_json)
+    response_data = cve_api.publish(cve_id, cve_json)
     if print_raw:
         print_json_data(response_data)
     else:
-        click.echo("Created the following CVE:\n")
-        print_created_cve(response_data["created"])
+        click.echo("Published the following CVE:\n")
+        print_published_cve(response_data["created"])
 
 
 @cli.command()
