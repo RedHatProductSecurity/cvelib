@@ -97,7 +97,8 @@ class CveApi:
     def reserve(self, count, random, year):
         """Reserve a set of CVE IDs.
 
-        This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota left over.
+        This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota
+        left over.
         """
         params = {
             "cve_year": year,
