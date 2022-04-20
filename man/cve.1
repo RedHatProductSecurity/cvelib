@@ -1,0 +1,59 @@
+.TH "CVE" "1" "2022-04-20" "0.7.0" "cve Manual"
+.SH NAME
+cve \- A CLI interface for the CVE Services API.
+.SH SYNOPSIS
+.B cve
+[OPTIONS] COMMAND [ARGS]...
+.SH DESCRIPTION
+A CLI interface for the CVE Services API.
+.SH OPTIONS
+.TP
+\fB\-u,\fP \-\-username TEXT
+Your username (env var: CVE_USER)  [required]
+.TP
+\fB\-o,\fP \-\-org TEXT
+Your CNA organization short name (env var: CVE_ORG)  [required]
+.TP
+\fB\-a,\fP \-\-api\-key TEXT
+Your API key (env var: CVE_API_KEY)  [required]
+.TP
+\fB\-e,\fP \-\-env [prod|dev|test]
+Select deployment environment to query (env var: CVE_ENVIRONMENT)
+.TP
+\fB\-\-api\-url\fP TEXT
+Provide arbitrary URL for the CVE API (env var: CVE_API_URL)
+.TP
+\fB\-i,\fP \-\-interactive
+Confirm create/update actions before execution (env var: CVE_INTERACTIVE)
+.TP
+\fB\-V,\fP \-\-version
+Show the version and exit.
+.SH COMMANDS
+.PP
+\fBreserve\fP
+  Reserve one or more CVE IDs.
+  See \fBcve-reserve(1)\fP for full documentation on the \fBreserve\fP command.
+.PP
+\fBshow\fP
+  Display a specific CVE ID owned by your CNA.
+  See \fBcve-show(1)\fP for full documentation on the \fBshow\fP command.
+.PP
+\fBlist\fP
+  Filter and list reserved CVE IDs owned by...
+  See \fBcve-list(1)\fP for full documentation on the \fBlist\fP command.
+.PP
+\fBquota\fP
+  Display the available CVE ID quota for...
+  See \fBcve-quota(1)\fP for full documentation on the \fBquota\fP command.
+.PP
+\fBuser\fP
+  Show information about a user.
+  See \fBcve-user(1)\fP for full documentation on the \fBuser\fP command.
+.PP
+\fBorg\fP
+  Show information about your organization.
+  See \fBcve-org(1)\fP for full documentation on the \fBorg\fP command.
+.PP
+\fBping\fP
+  Ping the CVE Services API to see if it is up.
+  See \fBcve-ping(1)\fP for full documentation on the \fBping\fP command.

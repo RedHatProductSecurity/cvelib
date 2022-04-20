@@ -158,6 +158,16 @@ tox -e py36
 tox -e py36 -- tests/test_cli.py::test_cve_show
 ```
 
+Any changes in the commands, their options, or help texts must be reflected in the generated man pages. To refresh
+them, run:
+
+```bash
+pip install click-man
+click-man cve
+# OR
+tox -e manpages
+```
+
 ---
 
 [CVE](https://cve.org) is a registered trademark of [The MITRE Corporation](https://www.mitre.org).
