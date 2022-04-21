@@ -1,3 +1,5 @@
+from datetime import datetime
+from typing import Iterator, Optional, Tuple
 from urllib.parse import urljoin
 
 import requests
@@ -17,15 +19,19 @@ class CveApi:
     }
     USER_ROLES = ("ADMIN",)
 
-    def __init__(self, username, org, api_key, env="prod", url=None):
+    def __init__(
+        self, username: str, org: str, api_key: str, env: str = "prod", url: Optional[str] = None
+    ) -> None:
         self.username = username
         self.org = org
         self.api_key = api_key
-        self.url = url or self.ENVS.get(env)
-        if not self.url:
-            raise ValueError("Missing URL for CVE API")
+        if not url:
+            url = self.ENVS.get(env)
+            if not url:
+                raise ValueError("Missing URL for CVE API")
+        self.url = url
 
-    def http_request(self, method, path, **kwargs):
+    def http_request(self, method: str, path: str, **kwargs) -> requests.Response:
         url = urljoin(self.url, path)
         headers = {
             "CVE-API-KEY": self.api_key,
@@ -53,10 +59,10 @@ class CveApi:
 
         return response
 
-    def get(self, path, **kwargs):
+    def get(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("get", path, **kwargs)
 
-    def get_paged(self, path, page_data_attr, params, **kwargs):
+    def get_paged(self, path: str, page_data_attr: str, params: dict, **kwargs) -> Iterator[dict]:
         """Get data from a paged endpoint.
 
         CVE Services 1.1.0 added pagination on responses longer than the default page size. For
@@ -81,13 +87,13 @@ class CveApi:
             else:
                 break
 
-    def post(self, path, **kwargs):
+    def post(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("post", path, **kwargs)
 
-    def put(self, path, **kwargs):
+    def put(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("put", path, **kwargs)
 
-    def reserve(self, count, random, year):
+    def reserve(self, count: int, random: bool, year: str) -> Tuple[dict, str]:
         """Reserve a set of CVE IDs.
 
         This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota
@@ -107,10 +113,16 @@ class CveApi:
         response = self.post("cve-id", params=params)
         return response.json(), response.headers["CVE-API-REMAINING-QUOTA"]
 
-    def show_cve(self, cve_id):
+    def show_cve(self, cve_id: str) -> dict:
         return self.get(f"cve-id/{cve_id}").json()
 
-    def list_cves(self, year=None, state=None, reserved_lt=None, reserved_gt=None):
+    def list_cves(
+        self,
+        year: str = None,
+        state: str = None,
+        reserved_lt: datetime = None,
+        reserved_gt: datetime = None,
+    ) -> Iterator[dict]:
         params = {}
         if year:
             params["cve_id_year"] = year
@@ -122,28 +134,28 @@ class CveApi:
             params["time_reserved.gt"] = reserved_gt.isoformat()
         return self.get_paged("cve-id", page_data_attr="cve_ids", params=params)
 
-    def quota(self):
+    def quota(self) -> dict:
         return self.get(f"org/{self.org}/id_quota").json()
 
-    def show_user(self, username):
+    def show_user(self, username: str) -> dict:
         return self.get(f"org/{self.org}/user/{username}").json()
 
-    def reset_api_key(self, username):
+    def reset_api_key(self, username: str) -> dict:
         return self.put(f"org/{self.org}/user/{username}/reset_secret").json()
 
-    def create_user(self, **user_data):
+    def create_user(self, **user_data: dict) -> dict:
         return self.post(f"org/{self.org}/user", json=user_data).json()
 
-    def update_user(self, username, **user_data):
+    def update_user(self, username, **user_data: dict) -> dict:
         return self.put(f"org/{self.org}/user/{username}", params=user_data).json()
 
-    def list_users(self):
+    def list_users(self) -> Iterator[dict]:
         return self.get_paged(f"org/{self.org}/users", page_data_attr="users", params={})
 
-    def show_org(self):
+    def show_org(self) -> dict:
         return self.get(f"org/{self.org}").json()
 
-    def ping(self):
+    def ping(self) -> Tuple[bool, Optional[str]]:
         """Check the CVE API status.
 
         Returns a tuple containing a boolean value of whether the request succeeded and any
