@@ -162,6 +162,13 @@ cve org users
 
 See `-h/--help` of any command for a complete list of sub-commands and options.
 
+## Other CVE Services Clients
+
+- Client-side library for the CVE API written in JavaScript: https://github.com/xdrr/cve.js
+- A web-based client interface and a client library in JavaScript: https://github.com/CERTCC/cveClient
+- A web-based tool for creating and editing CVE records in the CVE JSON format: https://github.com/Vulnogram/Vulnogram
+  - Hosted instance available at: https://vulnogram.github.io/#editor
+
 ## Development Setup
 
 ```bash
