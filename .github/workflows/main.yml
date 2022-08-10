@@ -13,6 +13,6 @@ jobs:
         tox_env: ${{ matrix.tox_env }}
     strategy:
       matrix:
-        tox_env: [py36, py37, py38, py39, py310, black, isort, flake8, manpages, mypy]
+        tox_env: [py36, py37, py38, py39, py310, black, isort, flake8, mypy]
 
     runs-on: ubuntu-latest
