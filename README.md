@@ -9,7 +9,7 @@ A library and a command line interface for the CVE Services API.
 
 ## Installation
 
-Universal installation method that works on Linux, MacOS, and Windows:
+### Linux, MacOS, Windows
 
 ```
 python3 -m pip install --user cvelib
@@ -29,6 +29,19 @@ Check the spelling of the name, or if a path was included, verify that the path 
 To resolve this error, add the file path for where your `cve.exe` file resides (for example,
 `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can
 edit your environment variables by searching *Edit the system environment variables*.
+
+### Podman/Docker
+
+You can fetch a specific version of the `cvelib` library installed in a container image at
+https://quay.io/repository/prodsecdev/cvelib. You can set up an alias to run the `cve` command using this container
+image:
+
+```
+alias cve='podman run -it --rm quay.io/prodsecdev/cvelib'
+alias cve='docker run -it --rm quay.io/prodsecdev/cvelib'
+```
+
+The `latest` container image tag will always point to the latest available version of the `cvelib` package in PyPI.
 
 ## CLI Setup and Configuration
 
@@ -59,6 +72,31 @@ PS C:\> $Env:CVE_USER="margo"
 PS C:\> $Env:CVE_ORG="acme"
 PS C:\> $Env:CVE_API_KEY="api_key"
 ```
+
+### Podman/Docker
+
+To pass the configuration variables to the `cvelib` container, defined them in an `.env` file:
+
+```
+CVE_USER=margo
+CVE_ORG=acme
+CVE_API_KEY=<api_key>
+```
+
+Then, specify that file in your Podman/Docker command, for example:
+
+```
+podman run -it --rm --env-file=.env quay.io/prodsecdev/cvelib ping
+```
+
+Alternatively, you can set the environment variables as shown in the sections above and pass them to the container
+using:
+
+```
+podman run -it --rm -e CVE_ORG -e CVE_API_KEY -e CVE_USER quay.io/prodsecdev/cvelib ping
+```
+
+### Additional Configuration
 
 Additional options that have an accompanying environment variable include:
 
