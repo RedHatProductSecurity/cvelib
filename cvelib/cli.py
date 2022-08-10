@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime
 from functools import wraps
-from typing import Any, Callable, DefaultDict, Optional, Union
+from typing import Any, Callable, DefaultDict, List, Optional, Union
 
 import click
 
@@ -103,7 +103,7 @@ def bool_to_text(value: Optional[bool]) -> str:
     return "Yes" if value else "No"
 
 
-def natural_cve_sort(cve: str) -> list[int]:
+def natural_cve_sort(cve: str) -> List[int]:
     if not cve:
         return []
     return [int(x) for x in cve.split("-")[1:]]
