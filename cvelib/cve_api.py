@@ -93,7 +93,7 @@ class CveApi:
     def put(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("put", path, **kwargs)
 
-    def publish(self, cve_id, cve_json):
+    def publish(self, cve_id: str, cve_json: dict):
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
         response = self.post(f"cve/{cve_id}/cna", json=cve_json)
@@ -114,8 +114,8 @@ class CveApi:
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
         response = self.post("cve-id", params=params)
-        response = response.json()
-        return response, response["meta"]["remaining_quota"]
+        data = response.json()
+        return data, data["meta"]["remaining_quota"]
 
     def show_cve(self, cve_id: str) -> dict:
         return self.get(f"cve-id/{cve_id}").json()
