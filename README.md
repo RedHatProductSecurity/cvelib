@@ -2,6 +2,12 @@
 
 A library and a command line interface for the CVE Services API.
 
+**NOTE: Changes for the upcoming release of CVE Services 2.1.0 are tracked in the
+[`cve-services-2.1.0`](https://github.com/RedHatProductSecurity/cvelib/tree/cve-services-2.1.0) branch.
+Code on the [`master`](https://github.com/RedHatProductSecurity/cvelib/tree/master) branch, also included in 
+the latest released PyPI package and the cvelib container image, are compatible with the currently-available CVE 
+Services 1.1.1 running at https://cveawg.mitre.org/api/.**
+
 ## Requirements
 
 - Python version 3.6 or greater
