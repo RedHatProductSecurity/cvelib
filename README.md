@@ -138,7 +138,7 @@ cve reserve 3 --year 2021 --random
 List all rejected CVEs for year 2018:
 
 ```
-cve list --year 2018 --state reject
+cve list --year 2018 --state rejected
 ```
 
 Assuming you have the `ADMIN` role (also called an _Org Admin_), create a new user in your
