@@ -135,6 +135,15 @@ Reserve three non-sequential CVE IDs for a specific year:
 cve reserve 3 --year 2021 --random
 ```
 
+Publish a CVE record for an already-reserved CVE ID:
+
+```
+cve publish 'CVE-2022-1234' --json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+```
+
+For information on the required properties in a given CVE JSON record, see the `cnaPublishedContainer` schema in:
+https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json.
+
 List all rejected CVEs for year 2018:
 
 ```

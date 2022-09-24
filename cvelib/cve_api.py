@@ -93,15 +93,18 @@ class CveApi:
     def put(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("put", path, **kwargs)
 
+    def publish(self, cve_id: str, cve_json: dict):
+        """Publish a CVE from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.post(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
     def reserve(self, count: int, random: bool, year: str) -> Tuple[dict, str]:
         """Reserve a set of CVE IDs.
 
         This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota
-        left over. The quota is only returned in an HTTP response header and is not part of the
-        returned data. If the following issue moves that information to the body of the response,
-        this method will be adjusted to return just the body of the response:
-
-        https://github.com/CVEProject/cve-services/issues/427
+        left over.
         """
         params = {
             "cve_year": year,
@@ -111,7 +114,8 @@ class CveApi:
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
         response = self.post("cve-id", params=params)
-        return response.json(), response.headers["CVE-API-REMAINING-QUOTA"]
+        data = response.json()
+        return data, data["meta"]["remaining_quota"]
 
     def show_cve(self, cve_id: str) -> dict:
         return self.get(f"cve-id/{cve_id}").json()
