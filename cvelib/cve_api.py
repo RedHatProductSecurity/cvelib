@@ -26,7 +26,7 @@ class CveApi:
                 raise ValueError("Missing URL for CVE API")
         self.url = url
 
-    def http_request(self, method: str, path: str, **kwargs) -> requests.Response:
+    def _http_request(self, method: str, path: str, **kwargs) -> requests.Response:
         url = urljoin(self.url, path)
         headers = {
             "CVE-API-KEY": self.api_key,
@@ -37,10 +37,10 @@ class CveApi:
         response.raise_for_status()
         return response
 
-    def get(self, path: str, **kwargs) -> requests.Response:
-        return self.http_request("get", path, **kwargs)
+    def _get(self, path: str, **kwargs) -> requests.Response:
+        return self._http_request("get", path, **kwargs)
 
-    def get_paged(self, path: str, page_data_attr: str, params: dict, **kwargs) -> Iterator[dict]:
+    def _get_paged(self, path: str, page_data_attr: str, params: dict, **kwargs) -> Iterator[dict]:
         """Get data from a paged endpoint.
 
         CVE Services 1.1.0 added pagination on responses longer than the default page size. For
@@ -53,7 +53,7 @@ class CveApi:
         This method yields returned data as it is received from each response.
         """
         while True:
-            response = self.get(path, params=params, **kwargs)
+            response = self._get(path, params=params, **kwargs)
             page = response.json()
 
             yield from page[page_data_attr]
@@ -65,37 +65,37 @@ class CveApi:
             else:
                 break
 
-    def post(self, path: str, **kwargs) -> requests.Response:
-        return self.http_request("post", path, **kwargs)
+    def _post(self, path: str, **kwargs) -> requests.Response:
+        return self._http_request("post", path, **kwargs)
 
-    def put(self, path: str, **kwargs) -> requests.Response:
-        return self.http_request("put", path, **kwargs)
+    def _put(self, path: str, **kwargs) -> requests.Response:
+        return self._http_request("put", path, **kwargs)
 
     def publish(self, cve_id: str, cve_json: dict) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
-        response = self.post(f"cve/{cve_id}/cna", json=cve_json)
+        response = self._post(f"cve/{cve_id}/cna", json=cve_json)
         response.raise_for_status()
         return response.json()
 
     def update_published(self, cve_id: str, cve_json: dict) -> dict:
         """Update a published CVE record from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
-        response = self.put(f"cve/{cve_id}/cna", json=cve_json)
+        response = self._put(f"cve/{cve_id}/cna", json=cve_json)
         response.raise_for_status()
         return response.json()
 
     def reject(self, cve_id: str, cve_json: dict) -> dict:
         """Reject a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
-        response = self.post(f"cve/{cve_id}/reject", json=cve_json)
+        response = self._post(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
 
     def update_rejected(self, cve_id: str, cve_json: dict) -> dict:
         """Update a rejected CVE record from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
-        response = self.put(f"cve/{cve_id}/reject", json=cve_json)
+        response = self._put(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
 
@@ -112,12 +112,12 @@ class CveApi:
         }
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
-        response = self.post("cve-id", params=params)
+        response = self._post("cve-id", params=params)
         data = response.json()
         return data, data["meta"]["remaining_quota"]
 
     def show_cve(self, cve_id: str) -> dict:
-        return self.get(f"cve-id/{cve_id}").json()
+        return self._get(f"cve-id/{cve_id}").json()
 
     def list_cves(
         self,
@@ -135,28 +135,28 @@ class CveApi:
             params["time_reserved.lt"] = reserved_lt.isoformat()
         if reserved_gt:
             params["time_reserved.gt"] = reserved_gt.isoformat()
-        return self.get_paged("cve-id", page_data_attr="cve_ids", params=params)
+        return self._get_paged("cve-id", page_data_attr="cve_ids", params=params)
 
     def quota(self) -> dict:
-        return self.get(f"org/{self.org}/id_quota").json()
+        return self._get(f"org/{self.org}/id_quota").json()
 
     def show_user(self, username: str) -> dict:
-        return self.get(f"org/{self.org}/user/{username}").json()
+        return self._get(f"org/{self.org}/user/{username}").json()
 
     def reset_api_key(self, username: str) -> dict:
-        return self.put(f"org/{self.org}/user/{username}/reset_secret").json()
+        return self._put(f"org/{self.org}/user/{username}/reset_secret").json()
 
     def create_user(self, **user_data: dict) -> dict:
-        return self.post(f"org/{self.org}/user", json=user_data).json()
+        return self._post(f"org/{self.org}/user", json=user_data).json()
 
     def update_user(self, username, **user_data: dict) -> dict:
-        return self.put(f"org/{self.org}/user/{username}", params=user_data).json()
+        return self._put(f"org/{self.org}/user/{username}", params=user_data).json()
 
     def list_users(self) -> Iterator[dict]:
-        return self.get_paged(f"org/{self.org}/users", page_data_attr="users", params={})
+        return self._get_paged(f"org/{self.org}/users", page_data_attr="users", params={})
 
     def show_org(self) -> dict:
-        return self.get(f"org/{self.org}").json()
+        return self._get(f"org/{self.org}").json()
 
     def ping(self) -> Optional[requests.exceptions.RequestException]:
         """Check the CVE API status.
@@ -164,7 +164,7 @@ class CveApi:
         Returns any RequestException that was raised if it did not succeed, else None.
         """
         try:
-            self.get("health-check")
+            self._get("health-check")
         except requests.exceptions.RequestException as exc:
             return exc
         return None
