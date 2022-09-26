@@ -5,12 +5,6 @@ from urllib.parse import urljoin
 import requests
 
 
-class CveApiError(Exception):
-    """Raise when encountering errors returned by the CVE API."""
-
-    pass
-
-
 class CveApi:
     ENVS = {
         "prod": "https://cveawg.mitre.org/api/",
@@ -38,25 +32,8 @@ class CveApi:
             "CVE-API-ORG": self.org,
             "CVE-API-USER": self.username,
         }
-        try:
-            response = requests.request(
-                method=method, url=url, timeout=60, headers=headers, **kwargs
-            )
-        except requests.exceptions.ConnectionError as exc:
-            raise CveApiError(str(exc)) from None
-
-        try:
-            response.raise_for_status()
-        except requests.exceptions.RequestException as exc:
-            if exc.response is not None:
-                try:
-                    error = exc.response.json()
-                except ValueError:
-                    error = exc.response.content
-                raise CveApiError(f"{exc}; returned error: {error}") from None
-            else:
-                raise CveApiError(str(exc)) from None
-
+        response = requests.request(method=method, url=url, timeout=60, headers=headers, **kwargs)
+        response.raise_for_status()
         return response
 
     def get(self, path: str, **kwargs) -> requests.Response:
@@ -166,14 +143,13 @@ class CveApi:
     def show_org(self) -> dict:
         return self.get(f"org/{self.org}").json()
 
-    def ping(self) -> Tuple[bool, Optional[str]]:
+    def ping(self) -> Optional[requests.exceptions.RequestException]:
         """Check the CVE API status.
 
-        Returns a tuple containing a boolean value of whether the request succeeded and any
-        error message that was emitted if it did not succeed.
+        Returns any RequestException that was raised if it did not succeed, else None.
         """
         try:
             self.get("health-check")
-        except CveApiError as exc:
-            return False, str(exc)
-        return True, None
+        except requests.exceptions.RequestException as exc:
+            return exc
+        return None

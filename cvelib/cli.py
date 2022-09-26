@@ -7,9 +7,10 @@ from functools import wraps
 from typing import Any, Callable, DefaultDict, List, Optional, Union
 
 import click
+import requests
 
 from . import __version__
-from .cve_api import CveApi, CveApiError
+from .cve_api import CveApi
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
@@ -123,14 +124,21 @@ def handle_cve_api_error(func: Callable) -> Callable:
     def wrapped(*args: Any, **kwargs: Any) -> Callable:
         try:
             return func(*args, **kwargs)
-        except CveApiError as exc:
-            error, _, details = str(exc).partition("; returned error: ")
-            click.secho("ERROR: ", bold=True, nl=False)
-            click.echo(error)
-            if details:
-                click.secho("DETAILS: ", bold=True, nl=False)
-                click.echo(details)
-            sys.exit(1)
+        except requests.exceptions.RequestException as exc:
+            error = str(exc)
+            details = None
+            if getattr(exc, "response", None) is not None:
+                try:
+                    details = exc.response.json()
+                except ValueError:
+                    details = exc.response.content
+
+        click.secho("ERROR: ", bold=True, nl=False)
+        click.echo(error)
+        if details:
+            click.secho("DETAILS: ", bold=True, nl=False)
+            click.echo(details)
+        sys.exit(1)
 
     return wrapped
 
@@ -716,14 +724,16 @@ def users(ctx: click.Context, print_raw: bool) -> None:
 
 @cli.command()
 @click.pass_context
+@handle_cve_api_error
 def ping(ctx: click.Context) -> None:
     """Ping the CVE Services API to see if it is up."""
     cve_api = ctx.obj.cve_api
-    ok, error_msg = cve_api.ping()
+    error = cve_api.ping()
 
     click.echo(f"CVE API Status — {cve_api.url}\n└─ ", nl=False)
-    if ok:
-        click.secho("OK", fg="green")
-    else:
-        click.secho("ERROR:", bold=True, nl=False)
-        click.echo(f" {error_msg}")
+    if error:
+        # Raise the exception again so the decorator pretty-prints the output
+        # We don't directly raise in ping() so we can print the status line first
+        raise error
+    # else ping() returned None
+    click.secho("OK", fg="green")
