@@ -11,6 +11,7 @@ class CveApi:
         "dev": "https://cveawg-dev.mitre.org/api/",
         "test": "https://cveawg-test.mitre.org/api/",
     }
+    RECORD_EXISTS = "CVE_RECORD_EXISTS"
     USER_ROLES = ("ADMIN",)
 
     def __init__(
@@ -70,17 +71,31 @@ class CveApi:
     def put(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("put", path, **kwargs)
 
-    def publish(self, cve_id: str, cve_json: dict):
+    def publish(self, cve_id: str, cve_json: dict) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
         response = self.post(f"cve/{cve_id}/cna", json=cve_json)
         response.raise_for_status()
         return response.json()
 
-    def reject(self, cve_id: str, cve_json: dict):
+    def update_published(self, cve_id: str, cve_json: dict) -> dict:
+        """Update a published CVE record from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.put(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def reject(self, cve_id: str, cve_json: dict) -> dict:
         """Reject a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
         response = self.post(f"cve/{cve_id}/reject", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def update_rejected(self, cve_id: str, cve_json: dict) -> dict:
+        """Update a rejected CVE record from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.put(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
 
