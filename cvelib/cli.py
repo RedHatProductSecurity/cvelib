@@ -7,9 +7,10 @@ from functools import wraps
 from typing import Any, Callable, DefaultDict, List, Optional, Union
 
 import click
+import requests
 
 from . import __version__
-from .cve_api import CveApi, CveApiError
+from .cve_api import CveApi
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
@@ -53,7 +54,7 @@ def print_reserved_cve(cve):
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
-def print_published_cve(cve):
+def print_cve_record(cve):
     click.secho(cve["cveMetadata"]["cveId"], bold=True)
     click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
     click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
@@ -123,14 +124,21 @@ def handle_cve_api_error(func: Callable) -> Callable:
     def wrapped(*args: Any, **kwargs: Any) -> Callable:
         try:
             return func(*args, **kwargs)
-        except CveApiError as exc:
-            error, _, details = str(exc).partition("; returned error: ")
-            click.secho("ERROR: ", bold=True, nl=False)
-            click.echo(error)
-            if details:
-                click.secho("DETAILS: ", bold=True, nl=False)
-                click.echo(details)
-            sys.exit(1)
+        except requests.exceptions.RequestException as exc:
+            error = str(exc)
+            details = None
+            if getattr(exc, "response", None) is not None:
+                try:
+                    details = exc.response.json()
+                except ValueError:
+                    details = exc.response.content
+
+        click.secho("ERROR: ", bold=True, nl=False)
+        click.echo(error)
+        if details:
+            click.secho("DETAILS: ", bold=True, nl=False)
+            click.echo(details)
+        sys.exit(1)
 
     return wrapped
 
@@ -236,7 +244,7 @@ def cli(
 def publish(ctx, cve_id, cve_json_str, print_raw):
     """Publish a CVE record for an already-reserved CVE ID.
 
-    Will not update if the CVE record is already published.
+    Will update if the CVE record already exists.
 
     \b
     cve publish 'CVE-2022-1234' --json \\
@@ -263,12 +271,77 @@ def publish(ctx, cve_id, cve_json_str, print_raw):
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    response_data = cve_api.publish(cve_id, cve_json)
+    try:
+        response_data = cve_api.publish(cve_id, cve_json)
+        created = True
+    except requests.exceptions.HTTPError as e:
+        error = e.response.json()["error"]
+        if e.response.status_code != 403 or error != cve_api.RECORD_EXISTS:
+            raise e
+        response_data = cve_api.update_published(cve_id, cve_json)
+        created = False
     if print_raw:
         print_json_data(response_data)
     else:
         click.echo("Published the following CVE:\n")
-        print_published_cve(response_data["created"])
+        print_cve_record(response_data["created"] if created else response_data["updated"])
+
+
+@cli.command()
+@click.argument("cve_id", type=click.STRING)
+@click.option(
+    "--json",
+    "cve_json_str",
+    required=True,
+    type=click.STRING,
+    help="JSON body of CVE record to reject.",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def reject(ctx, cve_id, cve_json_str, print_raw):
+    """Reject a CVE record for a reserved or published CVE ID.
+
+    Will update if the CVE record already exists.
+
+    \b
+    cve reject 'CVE-2022-1234' --json '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
+
+    For information on the required properties in a given CVE JSON record, see the
+    `cnaRejectedContainer` schema in:\n
+    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
+    """
+    try:
+        cve_json = json.loads(cve_json_str)
+    except json.JSONDecodeError as e:
+        click.echo("CVE data was not valid JSON. Error was:\n")
+        click.secho(e)
+        return
+    if ctx.obj.interactive:
+        click.echo("You are about to reject ", nl=False)
+        click.secho(cve_id, bold=True, nl=False)
+        click.echo(" using the following input:\n\n", nl=False)
+        click.secho(cve_json_str, bold=True, nl=False)
+        if not click.confirm("\n\nThis operation cannot be reversed; do you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    try:
+        response_data = cve_api.reject(cve_id, cve_json)
+        created = True
+    except requests.exceptions.HTTPError as e:
+        error = e.response.json()["error"]
+        if e.response.status_code != 400 or error != cve_api.RECORD_EXISTS:
+            raise e
+        response_data = cve_api.update_rejected(cve_id, cve_json)
+        created = False
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("Rejected the following CVE:\n")
+        print_cve_record(response_data["created"] if created else response_data["updated"])
 
 
 @cli.command()
@@ -667,14 +740,16 @@ def users(ctx: click.Context, print_raw: bool) -> None:
 
 @cli.command()
 @click.pass_context
+@handle_cve_api_error
 def ping(ctx: click.Context) -> None:
     """Ping the CVE Services API to see if it is up."""
     cve_api = ctx.obj.cve_api
-    ok, error_msg = cve_api.ping()
+    error = cve_api.ping()
 
     click.echo(f"CVE API Status — {cve_api.url}\n└─ ", nl=False)
-    if ok:
-        click.secho("OK", fg="green")
-    else:
-        click.secho("ERROR:", bold=True, nl=False)
-        click.echo(f" {error_msg}")
+    if error:
+        # Raise the exception again so the decorator pretty-prints the output
+        # We don't directly raise in ping() so we can print the status line first
+        raise error
+    # else ping() returned None
+    click.secho("OK", fg="green")

@@ -5,18 +5,13 @@ from urllib.parse import urljoin
 import requests
 
 
-class CveApiError(Exception):
-    """Raise when encountering errors returned by the CVE API."""
-
-    pass
-
-
 class CveApi:
     ENVS = {
         "prod": "https://cveawg.mitre.org/api/",
         "dev": "https://cveawg-dev.mitre.org/api/",
         "test": "https://cveawg-test.mitre.org/api/",
     }
+    RECORD_EXISTS = "CVE_RECORD_EXISTS"
     USER_ROLES = ("ADMIN",)
 
     def __init__(
@@ -38,25 +33,8 @@ class CveApi:
             "CVE-API-ORG": self.org,
             "CVE-API-USER": self.username,
         }
-        try:
-            response = requests.request(
-                method=method, url=url, timeout=60, headers=headers, **kwargs
-            )
-        except requests.exceptions.ConnectionError as exc:
-            raise CveApiError(str(exc)) from None
-
-        try:
-            response.raise_for_status()
-        except requests.exceptions.RequestException as exc:
-            if exc.response is not None:
-                try:
-                    error = exc.response.json()
-                except ValueError:
-                    error = exc.response.content
-                raise CveApiError(f"{exc}; returned error: {error}") from None
-            else:
-                raise CveApiError(str(exc)) from None
-
+        response = requests.request(method=method, url=url, timeout=60, headers=headers, **kwargs)
+        response.raise_for_status()
         return response
 
     def get(self, path: str, **kwargs) -> requests.Response:
@@ -93,10 +71,31 @@ class CveApi:
     def put(self, path: str, **kwargs) -> requests.Response:
         return self.http_request("put", path, **kwargs)
 
-    def publish(self, cve_id: str, cve_json: dict):
+    def publish(self, cve_id: str, cve_json: dict) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = {"cnaContainer": cve_json}
         response = self.post(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def update_published(self, cve_id: str, cve_json: dict) -> dict:
+        """Update a published CVE record from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.put(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def reject(self, cve_id: str, cve_json: dict) -> dict:
+        """Reject a CVE from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.post(f"cve/{cve_id}/reject", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def update_rejected(self, cve_id: str, cve_json: dict) -> dict:
+        """Update a rejected CVE record from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.put(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
 
@@ -159,14 +158,13 @@ class CveApi:
     def show_org(self) -> dict:
         return self.get(f"org/{self.org}").json()
 
-    def ping(self) -> Tuple[bool, Optional[str]]:
+    def ping(self) -> Optional[requests.exceptions.RequestException]:
         """Check the CVE API status.
 
-        Returns a tuple containing a boolean value of whether the request succeeded and any
-        error message that was emitted if it did not succeed.
+        Returns any RequestException that was raised if it did not succeed, else None.
         """
         try:
             self.get("health-check")
-        except CveApiError as exc:
-            return False, str(exc)
-        return True, None
+        except requests.exceptions.RequestException as exc:
+            return exc
+        return None
