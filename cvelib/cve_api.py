@@ -100,6 +100,13 @@ class CveApi:
         response.raise_for_status()
         return response.json()
 
+    def reject(self, cve_id: str, cve_json: dict):
+        """Reject a CVE from a JSON object representing the CNA container data."""
+        cve_json = {"cnaContainer": cve_json}
+        response = self.post(f"cve/{cve_id}/reject", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
     def reserve(self, count: int, random: bool, year: str) -> Tuple[dict, str]:
         """Reserve a set of CVE IDs.
 
