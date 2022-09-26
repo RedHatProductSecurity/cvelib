@@ -244,7 +244,7 @@ def cli(
 def publish(ctx, cve_id, cve_json_str, print_raw):
     """Publish a CVE record for an already-reserved CVE ID.
 
-    Will not update if the CVE record is already published.
+    Will update if the CVE record already exists.
 
     \b
     cve publish 'CVE-2022-1234' --json \\
@@ -271,12 +271,20 @@ def publish(ctx, cve_id, cve_json_str, print_raw):
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    response_data = cve_api.publish(cve_id, cve_json)
+    try:
+        response_data = cve_api.publish(cve_id, cve_json)
+        created = True
+    except requests.exceptions.HTTPError as e:
+        error = e.response.json()["error"]
+        if e.response.status_code != 403 or error != cve_api.RECORD_EXISTS:
+            raise e
+        response_data = cve_api.update_published(cve_id, cve_json)
+        created = False
     if print_raw:
         print_json_data(response_data)
     else:
         click.echo("Published the following CVE:\n")
-        print_cve_record(response_data["created"])
+        print_cve_record(response_data["created"] if created else response_data["updated"])
 
 
 @cli.command()
@@ -294,7 +302,7 @@ def publish(ctx, cve_id, cve_json_str, print_raw):
 def reject(ctx, cve_id, cve_json_str, print_raw):
     """Reject a CVE record for a reserved or published CVE ID.
 
-    Will not update if the CVE record is already rejected.
+    Will update if the CVE record already exists.
 
     \b
     cve reject 'CVE-2022-1234' --json '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
@@ -320,12 +328,20 @@ def reject(ctx, cve_id, cve_json_str, print_raw):
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    response_data = cve_api.reject(cve_id, cve_json)
+    try:
+        response_data = cve_api.reject(cve_id, cve_json)
+        created = True
+    except requests.exceptions.HTTPError as e:
+        error = e.response.json()["error"]
+        if e.response.status_code != 400 or error != cve_api.RECORD_EXISTS:
+            raise e
+        response_data = cve_api.update_rejected(cve_id, cve_json)
+        created = False
     if print_raw:
         print_json_data(response_data)
     else:
         click.echo("Rejected the following CVE:\n")
-        print_cve_record(response_data["created"])
+        print_cve_record(response_data["created"] if created else response_data["updated"])
 
 
 @cli.command()
