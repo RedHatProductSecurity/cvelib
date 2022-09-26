@@ -149,6 +149,53 @@ def test_cve_create():
         )
 
 
+def test_cve_reject():
+    cve_id = "CVE-2001-0635"
+    cna_dict = {
+        "providerMetadata": {
+            "orgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "shortName": "test_org",
+        },
+        "rejectedReasons": [
+            {
+                "lang": "en",
+                "value": "There would be words here if this was real data.",
+            },
+        ],
+    }
+
+    cve_dict = {
+        "containers": {"cna": cna_dict},
+        "cveMetadata": {
+            "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "assignerShortName": "test_org",
+            "cveId": cve_id,
+            "dateRejected": "2001-05-02T00:00:00Z",
+            "dateReserved": "2021-06-29T12:33:52.892Z",
+            "requesterUserId": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
+            "state": "REJECTED",
+        },
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.0",
+    }
+    cna_text = json.dumps(cna_dict)
+    response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
+
+    with mock.patch("cvelib.cli.CveApi.reject") as reject:
+        reject.return_value = response_dict
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["reject", cve_id, "--json", cna_text])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Rejected the following CVE:\n"
+            "\n"
+            f"{cve_id}\n"
+            "├─ State:\tREJECTED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        )
+
+
 def test_quota():
     quota = {"id_quota": 100, "total_reserved": 10, "available": 90}
     with mock.patch("cvelib.cli.CveApi.quota") as get_quota:

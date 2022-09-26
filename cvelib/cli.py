@@ -53,7 +53,7 @@ def print_reserved_cve(cve):
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
-def print_published_cve(cve):
+def print_cve_record(cve):
     click.secho(cve["cveMetadata"]["cveId"], bold=True)
     click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
     click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
@@ -268,7 +268,56 @@ def publish(ctx, cve_id, cve_json_str, print_raw):
         print_json_data(response_data)
     else:
         click.echo("Published the following CVE:\n")
-        print_published_cve(response_data["created"])
+        print_cve_record(response_data["created"])
+
+
+@cli.command()
+@click.argument("cve_id", type=click.STRING)
+@click.option(
+    "--json",
+    "cve_json_str",
+    required=True,
+    type=click.STRING,
+    help="JSON body of CVE record to reject.",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def reject(ctx, cve_id, cve_json_str, print_raw):
+    """Reject a CVE record for a reserved or published CVE ID.
+
+    Will not update if the CVE record is already rejected.
+
+    \b
+    cve reject 'CVE-2022-1234' --json '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
+
+    For information on the required properties in a given CVE JSON record, see the
+    `cnaRejectedContainer` schema in:\n
+    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
+    """
+    try:
+        cve_json = json.loads(cve_json_str)
+    except json.JSONDecodeError as e:
+        click.echo("CVE data was not valid JSON. Error was:\n")
+        click.secho(e)
+        return
+    if ctx.obj.interactive:
+        click.echo("You are about to reject ", nl=False)
+        click.secho(cve_id, bold=True, nl=False)
+        click.echo(" using the following input:\n\n", nl=False)
+        click.secho(cve_json_str, bold=True, nl=False)
+        if not click.confirm("\n\nThis operation cannot be reversed; do you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    response_data = cve_api.reject(cve_id, cve_json)
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("Rejected the following CVE:\n")
+        print_cve_record(response_data["created"])
 
 
 @cli.command()
