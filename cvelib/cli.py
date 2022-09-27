@@ -396,16 +396,16 @@ def reserve(ctx: click.Context, random: bool, year: str, count: int, print_raw: 
         click.echo()
 
     cve_api = ctx.obj.cve_api
-    cve_data, remaining_quota = cve_api.reserve(count, random, year)
+    cve_data = cve_api.reserve(count, random, year)
     if print_raw:
         print_json_data(cve_data)
         return
 
     click.echo("Reserved the following CVE ID(s):\n")
-    for cve in cve_data["cve_ids"]:
-        print_reserved_cve(cve)
+    for cve_id_data in cve_data["cve_ids"]:
+        print_cve_id(cve_id_data)
 
-    click.echo(f"\nRemaining quota: {remaining_quota}")
+    click.echo(f"\nRemaining quota: {cve_data['meta']['remaining_quota']}")
 
 
 @cli.command(name="show")

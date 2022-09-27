@@ -236,7 +236,7 @@ def test_reserve():
         },
     }
     with mock.patch("cvelib.cli.CveApi.reserve") as reserve:
-        reserve.return_value = reserved_cves, 10
+        reserve.return_value = reserved_cves
         runner = CliRunner()
         result = runner.invoke(cli, DEFAULT_OPTS + ["reserve", "-y", "2021", "2"])
         assert result.exit_code == 0, result.output
