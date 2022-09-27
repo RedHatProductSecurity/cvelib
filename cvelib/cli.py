@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime
 from functools import wraps
-from typing import Any, Callable, DefaultDict, List, Optional, Union
+from typing import Any, Callable, DefaultDict, List, Optional, Sequence, Union
 
 import click
 import requests
@@ -42,7 +42,7 @@ def human_ts(ts: str) -> str:
     return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
 
 
-def print_reserved_cve(cve):
+def print_reserved_cve(cve: dict) -> None:
     click.secho(cve["cve_id"], bold=True)
     click.echo(f"├─ State:\t{cve['state']}")
     # CVEs reserved by other CNAs do not include information on who requested them and when.
@@ -54,14 +54,14 @@ def print_reserved_cve(cve):
         click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
-def print_cve_record(cve):
+def print_cve_record(cve: dict) -> None:
     click.secho(cve["cveMetadata"]["cveId"], bold=True)
     click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
     click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
     click.echo(f"└─ Reserved on:\t{human_ts(cve['cveMetadata']['dateReserved'])}")
 
 
-def print_table(lines):
+def print_table(lines: Sequence[Sequence[str]]) -> None:
     """Print tabulated data based on the widths of the longest values in each column."""
     col_widths = []
     for item_index in range(len(lines[0])):
@@ -241,7 +241,7 @@ def cli(
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
-def publish(ctx, cve_id, cve_json_str, print_raw):
+def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) -> None:
     """Publish a CVE record for an already-reserved CVE ID.
 
     Will update if the CVE record already exists.
@@ -299,7 +299,7 @@ def publish(ctx, cve_id, cve_json_str, print_raw):
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
-def reject(ctx, cve_id, cve_json_str, print_raw):
+def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) -> None:
     """Reject a CVE record for a reserved or published CVE ID.
 
     Will update if the CVE record already exists.
