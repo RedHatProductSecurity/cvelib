@@ -427,7 +427,7 @@ def show_cve(ctx: click.Context, print_raw: bool, cve_id: str) -> None:
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.option(
     "--sort-by",
-    type=click.Choice(["cve_id", "state", "user", "reserved"], case_sensitive=False),
+    type=click.Choice(["cve_id", "state", "user", "reserved_ts"], case_sensitive=False),
     default="cve_id",
     help="Sort output.",
 )
@@ -463,12 +463,12 @@ def list_cves(ctx: click.Context, print_raw: bool, sort_by: str, **query: dict) 
             cves.sort(key=lambda x: x["requested_by"]["user"])
         elif key == "cve_id":
             cves.sort(key=lambda x: natural_cve_sort(x["cve_id"]))
-        elif key == "reserved_asc":
+        elif key == "reserved_ts":
             cves.sort(key=lambda x: x["reserved"])
         elif key == "state":
             cves.sort(key=lambda x: x["state"])
 
-    lines = [("CVE ID", "STATE", "OWNING CNA", "REQUESTED BY", "RESERVED")]
+    lines = [("CVE ID", "STATE", "OWNING CNA", "RESERVED BY", "RESERVED ON")]
     for cve in cves:
         lines.append(
             (
