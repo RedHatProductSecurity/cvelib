@@ -373,7 +373,9 @@ def reserve(ctx: click.Context, random: bool, year: str, count: int, print_raw: 
     generated sequentially (default) or non-sequentially (random IDs are selected from your CVE ID
     range).
 
-    For more information, see: "Developer Guide to CVE Services API" (https://git.io/JLcmZ)
+    \b
+    For more information, see the "Developer Guide to CVE Services API":
+    https://github.com/CVEProject/cve-services/wiki/Developer-Guide-to-CVE-Services-API#different-reservation-types
     """
     if random and count > 10:
         raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request.")
