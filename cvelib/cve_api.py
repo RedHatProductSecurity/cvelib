@@ -1,5 +1,5 @@
 from datetime import datetime
-from typing import Iterator, Optional, Tuple
+from typing import Iterator, Optional
 from urllib.parse import urljoin
 
 import requests
@@ -99,11 +99,10 @@ class CveApi:
         response.raise_for_status()
         return response.json()
 
-    def reserve(self, count: int, random: bool, year: str) -> Tuple[dict, str]:
+    def reserve(self, count: int, random: bool, year: str) -> dict:
         """Reserve a set of CVE IDs.
 
-        This method returns a tuple containing the reserved CVE IDs, and the remaining ID quota
-        left over.
+        The return object contains the reserved CVE IDs and the remaining CVE ID quota.
         """
         params = {
             "cve_year": year,
@@ -112,9 +111,7 @@ class CveApi:
         }
         if count > 1:
             params["batch_type"] = "nonsequential" if random else "sequential"
-        response = self._post("cve-id", params=params)
-        data = response.json()
-        return data, data["meta"]["remaining_quota"]
+        return self._post("cve-id", params=params).json()
 
     def show_cve(self, cve_id: str) -> dict:
         return self._get(f"cve-id/{cve_id}").json()
