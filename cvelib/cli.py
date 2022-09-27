@@ -256,9 +256,9 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
     """
     try:
         cve_json = json.loads(cve_json_str)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError as exc:
         click.echo("CVE data was not valid JSON. Error was:\n")
-        click.secho(e)
+        click.secho(str(exc))
         return
     if ctx.obj.interactive:
         click.echo("You are about to publish a CVE record for ", nl=False)
@@ -274,10 +274,10 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
     try:
         response_data = cve_api.publish(cve_id, cve_json)
         created = True
-    except requests.exceptions.HTTPError as e:
-        error = e.response.json()["error"]
-        if e.response.status_code != 403 or error != cve_api.RECORD_EXISTS:
-            raise e
+    except requests.exceptions.HTTPError as exc:
+        error = exc.response.json()["error"]
+        if exc.response.status_code != 403 or error != cve_api.RECORD_EXISTS:
+            raise exc
         response_data = cve_api.update_published(cve_id, cve_json)
         created = False
     if print_raw:
@@ -313,9 +313,9 @@ def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) 
     """
     try:
         cve_json = json.loads(cve_json_str)
-    except json.JSONDecodeError as e:
+    except json.JSONDecodeError as exc:
         click.echo("CVE data was not valid JSON. Error was:\n")
-        click.secho(e)
+        click.secho(str(exc))
         return
     if ctx.obj.interactive:
         click.echo("You are about to reject ", nl=False)
@@ -331,10 +331,10 @@ def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) 
     try:
         response_data = cve_api.reject(cve_id, cve_json)
         created = True
-    except requests.exceptions.HTTPError as e:
-        error = e.response.json()["error"]
-        if e.response.status_code != 400 or error != cve_api.RECORD_EXISTS:
-            raise e
+    except requests.exceptions.HTTPError as exc:
+        error = exc.response.json()["error"]
+        if exc.response.status_code != 400 or error != cve_api.RECORD_EXISTS:
+            raise exc
         response_data = cve_api.update_rejected(cve_id, cve_json)
         created = False
     if print_raw:
