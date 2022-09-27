@@ -42,7 +42,7 @@ def human_ts(ts: str) -> str:
     return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
 
 
-def print_reserved_cve(cve: dict) -> None:
+def print_cve_id(cve: dict) -> None:
     click.secho(cve["cve_id"], bold=True)
     click.echo(f"├─ State:\t{cve['state']}")
     # CVEs reserved by other CNAs do not include information on who requested them and when.
@@ -409,18 +409,35 @@ def reserve(ctx: click.Context, random: bool, year: str, count: int, print_raw: 
 
 
 @cli.command(name="show")
+@click.option(
+    "-r",
+    "--show-record",
+    default=False,
+    is_flag=True,
+    help="Show full CVE record in JSON v5 format.",
+)
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.argument("cve_id", callback=validate_cve)
 @click.pass_context
 @handle_cve_api_error
-def show_cve(ctx: click.Context, print_raw: bool, cve_id: str) -> None:
-    """Display a specific CVE ID owned by your CNA."""
+def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str) -> None:
+    """Display a specific CVE ID (and optionally its record) owned by your CNA."""
     cve_api = ctx.obj.cve_api
-    cve = cve_api.show_cve(cve_id=cve_id)
+
+    cve_id_data = cve_api.show_cve_id(cve_id=cve_id)
+    cve_record_data = None
+    if show_record:
+        cve_record_data = cve_api.show_cve_record(cve_id=cve_id)
+
     if print_raw:
-        print_json_data(cve)
+        print_json_data(cve_id_data)
     else:
-        print_reserved_cve(cve)
+        print_cve_id(cve_id_data)
+        if cve_record_data:
+            click.secho("-----", bold=True)
+
+    if cve_record_data:
+        print_json_data(cve_record_data)
 
 
 @cli.command(name="list")
