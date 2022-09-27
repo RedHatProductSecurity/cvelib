@@ -8,8 +8,10 @@ from cvelib.cli import cli
 DEFAULT_OPTS = ["-o", "test_org", "-u", "test_user", "-a", "test_api_key"]
 
 
-def test_cve_show():
-    cve = {
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_cve_id_show(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
         "cve_id": "CVE-2099-1000",
         "cve_year": "2099",
         "owning_cna": "acme",
@@ -18,18 +20,71 @@ def test_cve_show():
         "state": "RESERVED",
         "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.929Z"},
     }
-    with mock.patch("cvelib.cli.CveApi.show_cve") as show_cve:
-        show_cve.return_value = cve
-        runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
-        assert result.exit_code == 0, result.output
-        assert result.output == (
-            "CVE-2099-1000\n"
-            "├─ State:\tRESERVED\n"
-            "├─ Owning CNA:\tacme\n"
-            "├─ Reserved by:\tjack@example.com (acme)\n"
-            "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
-        )
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "CVE-2099-1000\n"
+        "├─ State:\tRESERVED\n"
+        "├─ Owning CNA:\tacme\n"
+        "├─ Reserved by:\tjack@example.com (acme)\n"
+        "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
+    )
+    assert not show_cve_record.called
+
+
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_cve_show_full(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
+        "cve_id": "CVE-2099-1000",
+        "cve_year": "2099",
+        "owning_cna": "acme",
+        "requested_by": {"cna": "acme", "user": "jack@example.com"},
+        "reserved": "2021-01-14T18:35:17.928Z",
+        "state": "RESERVED",
+        "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.929Z"},
+    }
+    show_cve_record.return_value = {
+        "containers": {
+            "cna": {
+                "providerMetadata": {
+                    "dateUpdated": "2022-09-27T15:29:12.964Z",
+                    "orgId": "65fe0718-9a55-4e29-8e61-d4ddf6d83e28",
+                    "shortName": "acme",
+                },
+                "rejectedReasons": [{"lang": "en", "value": "text"}],
+            }
+        },
+        "cveMetadata": {
+            "assignerOrgId": "65fe0718-9a55-4e29-8e61-d4ddf6d83e28",
+            "assignerShortName": "acme",
+            "cveId": "CVE-2099-1000",
+            "dateRejected": "2022-09-27T15:26:42.117Z",
+            "dateReserved": "2021-01-14T18:35:17.469Z",
+            "dateUpdated": "2022-09-27T15:29:12.964Z",
+            "state": "REJECTED",
+        },
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.0",
+    }
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000", "--show-record"])
+    assert result.exit_code == 0, result.output
+    printed_cve_id, _, printed_cve_record = result.output.partition("-----")
+    assert printed_cve_id == (
+        "CVE-2099-1000\n"
+        "├─ State:\tRESERVED\n"
+        "├─ Owning CNA:\tacme\n"
+        "├─ Reserved by:\tjack@example.com (acme)\n"
+        "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
+    )
+    # Don't bother checking the data since we provide it as a fixture anyway. Simply check that a
+    # JSON is displayed and the length of the printed string is something reasonable.
+    assert printed_cve_record.startswith("\n{")
+    assert len(printed_cve_record) > 100
 
 
 def test_cve_list():
