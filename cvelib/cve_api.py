@@ -113,8 +113,11 @@ class CveApi:
             params["batch_type"] = "nonsequential" if random else "sequential"
         return self._post("cve-id", params=params).json()
 
-    def show_cve(self, cve_id: str) -> dict:
+    def show_cve_id(self, cve_id: str) -> dict:
         return self._get(f"cve-id/{cve_id}").json()
+
+    def show_cve_record(self, cve_id: str) -> dict:
+        return self._get(f"cve/{cve_id}").json()
 
     def list_cves(
         self,
