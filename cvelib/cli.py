@@ -226,7 +226,7 @@ def cli(
 
 
 @cli.command()
-@click.argument("cve_id", type=click.STRING)
+@click.argument("cve_id", callback=validate_cve)
 @click.option(
     "--json",
     "cve_json_str",
@@ -284,7 +284,7 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
 
 
 @cli.command()
-@click.argument("cve_id", type=click.STRING)
+@click.argument("cve_id", callback=validate_cve)
 @click.option(
     "--json",
     "cve_json_str",
