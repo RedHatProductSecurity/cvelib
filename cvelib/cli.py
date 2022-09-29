@@ -445,7 +445,7 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
             if cve_record_data:
                 print_json_data(cve_record_data)
             else:
-                click.echo("CVE record does not exists.")
+                click.echo("CVE record does not exist.")
 
 
 @cli.command(name="list")
