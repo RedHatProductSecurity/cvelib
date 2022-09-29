@@ -17,7 +17,7 @@ Services 1.1.1 running at https://cveawg.mitre.org/api/.**
 
 ### Linux, MacOS, Windows
 
-```
+```bash
 python3 -m pip install --user cvelib
 ```
 
@@ -34,7 +34,7 @@ Check the spelling of the name, or if a path was included, verify that the path 
 
 To resolve this error, add the file path for where your `cve.exe` file resides (for example,
 `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can
-edit your environment variables by searching *Edit the system environment variables*.
+edit your environment variables by searching *Edit the system environment variables* from the Start menu.
 
 ### Podman/Docker
 
@@ -42,8 +42,9 @@ You can fetch a specific version of the `cvelib` library installed in a containe
 https://quay.io/repository/prodsecdev/cvelib. You can set up an alias to run the `cve` command using this container
 image:
 
-```
+```bash
 alias cve='podman run -it --rm quay.io/prodsecdev/cvelib'
+# OR
 alias cve='docker run -it --rm quay.io/prodsecdev/cvelib'
 ```
 
@@ -57,7 +58,7 @@ the authentication details with every command (using options `-u/--username`, `-
 
 ### Linux & MacOS
 
-```
+```bash
 $ export CVE_USER=margo
 $ export CVE_ORG=acme
 $ export CVE_API_KEY=<api_key>
@@ -91,14 +92,14 @@ CVE_API_KEY=<api_key>
 
 Then, specify that file in your Podman/Docker command, for example:
 
-```
+```bash
 podman run -it --rm --env-file=.env quay.io/prodsecdev/cvelib ping
 ```
 
 Alternatively, you can set the environment variables as shown in the sections above and pass them to the container
 using:
 
-```
+```bash
 podman run -it --rm -e CVE_ORG -e CVE_API_KEY -e CVE_USER quay.io/prodsecdev/cvelib ping
 ```
 
@@ -107,37 +108,39 @@ podman run -it --rm -e CVE_ORG -e CVE_API_KEY -e CVE_USER quay.io/prodsecdev/cve
 Additional options that have an accompanying environment variable include:
 
 * `-e/--environment` or `CVE_ENVIRONMENT`: allows you to configure the deployment environment
-  (that is, the URL at which the service is available) to interface with. Allowed values: `prod`,
+  (that is, the URL at which the CVE Services is available) to interface with. Allowed values: `prod`,
   `test`, and `dev`. Separate credentials are required for each environment. The `test` and `dev`
-  environments may not be consistenly available as the CVE backend services are still in development.
+  environments may not be consistently available during the development life cycle of CVE Services.
 
-* `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE API that would
+* `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE Services API that would
   otherwise be determined by the deployment environment you selected. This is useful for local
-  testing to point to a CVE API instance running on localhost.
+  testing to point to a CVE Services API instance running on localhost (for example,
+  `export CVE_API_URL=http://localhost:3000/api/).
 
 * `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action will require confirmation
-  before a request is sent. 
+  before a request is sent to CVE Services. Truthy values for the environment variable are:
+  `1`, `t`, `yes`.
 
-## CLI Usage
+## CLI Usage Examples
 
 Available options and commands can be displayed by running `cve --help`. The following are
 examples of some commonly used operations.
 
 Reserve one CVE ID in the current year (you will be prompted to confirm your action):
 
-```
+```bash
 cve --interactive reserve
 ```
 
 Reserve three non-sequential CVE IDs for a specific year:
 
-```
+```bash
 cve reserve 3 --year 2021 --random
 ```
 
 Publish a CVE record for an already-reserved CVE ID:
 
-```
+```bash
 cve publish 'CVE-2022-1234' --json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
 ```
 
@@ -146,32 +149,32 @@ https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_sc
 
 List all rejected CVEs for year 2018:
 
-```
+```bash
 cve list --year 2018 --state reject
 ```
 
 Assuming you have the `ADMIN` role (also called an _Org Admin_), create a new user in your
 organization with:
 
-```
+```bash
 cve user create -u foo@bar.com --name-first Foo --name-last Bar
 ```
 
 Mark a user as inactive (again, assuming you have the `ADMIN` role):
 
-```
+```bash
 cve user update -u foo@bar.com --mark-inactive
 ```
 
 Reset your own API key:
 
-```
+```bash
 cve user reset-key
 ```
 
 List all users in your organization:
 
-```
+```bash
 cve org users
 ```
 
@@ -179,10 +182,11 @@ See `-h/--help` of any command for a complete list of sub-commands and options.
 
 ## Other CVE Services Clients
 
-- Client-side library for the CVE API written in JavaScript: https://github.com/xdrr/cve.js
+- Client-side library written in JavaScript: https://github.com/xdrr/cve.js
 - A web-based client interface and a client library in JavaScript: https://github.com/CERTCC/cveClient
-- A web-based tool for creating and editing CVE records in the CVE JSON format: https://github.com/Vulnogram/Vulnogram
-  - Hosted instance available at: https://vulnogram.github.io/#editor
+- A web-based tool for creating and editing CVE records in the CVE JSON v5 format:
+  https://github.com/Vulnogram/Vulnogram
+  - A hosted instance is available at: https://vulnogram.github.io/#editor
 
 ## Development Setup
 
@@ -194,6 +198,8 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -e .
 pip install tox
+# If you want to use any of the dev dependencies outside of Tox, you can install them all with:
+pip install -e .[dev]
 ```
 
 This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire
@@ -205,7 +211,15 @@ pip install black
 black .
 ```
 
-Running tests:
+To sort all imports using [isort](https://pycqa.github.io/isort/), run:
+
+```bash
+# Sort all imports
+pip install isort
+isort .
+```
+
+Running tests and linters (`flake8`, `mypy`, and `isort`/`black` formatting checks):
 
 ```bash
 # Run all tests and format check (also run as a Github action)
