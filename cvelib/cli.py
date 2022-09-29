@@ -435,11 +435,16 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
                 raise exc
 
     if print_raw:
-        print_json_data(cve_id_data)
+        # Serialize the CVE ID data and CVE record into an array for easier parsing if we're
+        # showing the record as well. If not, just display the CVE ID data.
         if show_record:
-            print_json_data(cve_record_data)
+            print_json_data([cve_id_data, cve_record_data])
+        else:
+            print_json_data(cve_id_data)
     else:
         print_cve_id(cve_id_data)
+        # If we're showing the CVE record, display it as either the raw JSON if it exists or show
+        # an informational message if it does not.
         if show_record:
             click.secho("-----", bold=True)
             if cve_record_data:
