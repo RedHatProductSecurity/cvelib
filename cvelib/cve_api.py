@@ -11,8 +11,12 @@ class CveApi:
         "dev": "https://cveawg-dev.mitre.org/api/",
         "test": "https://cveawg-test.mitre.org/api/",
     }
-    RECORD_EXISTS = "CVE_RECORD_EXISTS"
+
     USER_ROLES = ("ADMIN",)
+
+    class Errors:
+        RECORD_EXISTS = "CVE_RECORD_EXISTS"
+        RECORD_DOES_NOT_EXIST = "CVE_RECORD_DNE"
 
     def __init__(
         self, username: str, org: str, api_key: str, env: str = "prod", url: Optional[str] = None

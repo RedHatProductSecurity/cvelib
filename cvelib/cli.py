@@ -272,7 +272,7 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
         created = True
     except requests.exceptions.HTTPError as exc:
         error = exc.response.json()["error"]
-        if exc.response.status_code != 403 or error != cve_api.RECORD_EXISTS:
+        if exc.response.status_code != 403 or error != cve_api.Errors.RECORD_EXISTS:
             raise exc
         response_data = cve_api.update_published(cve_id, cve_json)
         created = False
@@ -329,7 +329,7 @@ def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) 
         created = True
     except requests.exceptions.HTTPError as exc:
         error = exc.response.json()["error"]
-        if exc.response.status_code != 400 or error != cve_api.RECORD_EXISTS:
+        if exc.response.status_code != 400 or error != cve_api.Errors.RECORD_EXISTS:
             raise exc
         response_data = cve_api.update_rejected(cve_id, cve_json)
         created = False
@@ -425,19 +425,27 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
     cve_api = ctx.obj.cve_api
 
     cve_id_data = cve_api.show_cve_id(cve_id=cve_id)
-    cve_record_data = None
+    cve_record_data = {}
     if show_record:
-        cve_record_data = cve_api.show_cve_record(cve_id=cve_id)
+        try:
+            cve_record_data = cve_api.show_cve_record(cve_id=cve_id)
+        except requests.exceptions.HTTPError as exc:
+            error_msg = exc.response.json()["error"]
+            if exc.response.status_code != 404 or error_msg != cve_api.Errors.RECORD_DOES_NOT_EXIST:
+                raise exc
 
     if print_raw:
         print_json_data(cve_id_data)
+        if show_record:
+            print_json_data(cve_record_data)
     else:
         print_cve_id(cve_id_data)
-        if cve_record_data:
+        if show_record:
             click.secho("-----", bold=True)
-
-    if cve_record_data:
-        print_json_data(cve_record_data)
+            if cve_record_data:
+                print_json_data(cve_record_data)
+            else:
+                click.echo("CVE record does not exists.")
 
 
 @cli.command(name="list")
