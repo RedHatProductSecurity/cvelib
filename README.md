@@ -108,7 +108,7 @@ podman run -it --rm -e CVE_ORG -e CVE_API_KEY -e CVE_USER quay.io/prodsecdev/cve
 Additional options that have an accompanying environment variable include:
 
 * `-e/--environment` or `CVE_ENVIRONMENT`: allows you to configure the deployment environment
-  (that is, the URL at which the CVE Services is available) to interface with. Allowed values: `prod`,
+  (that is, the URL at which CVE Services is available) to interface with. Allowed values: `prod`,
   `test`, and `dev`. Separate credentials are required for each environment. The `test` and `dev`
   environments may not be consistently available during the development life cycle of CVE Services.
 
