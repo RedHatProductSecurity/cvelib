@@ -141,7 +141,7 @@ cve reserve 3 --year 2021 --random
 Publish a CVE record for an already-reserved CVE ID:
 
 ```bash
-cve publish 'CVE-2022-1234' --json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+cve publish CVE-2022-1234 --cve-json '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
 ```
 
 For information on the required properties in a given CVE JSON record, see the `cnaPublishedContainer` schema in:

@@ -1,8 +1,15 @@
 from datetime import datetime
+from enum import Enum
 from typing import Iterator, Optional
 from urllib.parse import urljoin
 
 import requests
+
+
+class Constants(str, Enum):
+    @classmethod
+    def values(cls):
+        return tuple(m.value for m in cls)
 
 
 class CveApi:
@@ -14,7 +21,12 @@ class CveApi:
 
     USER_ROLES = ("ADMIN",)
 
-    class Errors:
+    class States(Constants):
+        RESERVED = "reserved"
+        PUBLISHED = "published"
+        REJECTED = "rejected"
+
+    class Errors(Constants):
         RECORD_EXISTS = "CVE_RECORD_EXISTS"
         RECORD_DOES_NOT_EXIST = "CVE_RECORD_DNE"
 
@@ -102,6 +114,27 @@ class CveApi:
         response = self._put(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
+
+    def move_to_rejected(self, cve_id):
+        """Move a CVE ID to the REJECTED state without a CVE record.
+
+        This is only possible if a CVE ID is in the RESERVED state.
+
+        Moving a CVE ID to the REJECTED state without a CVE record is not possible if it has
+        already been PUBLISHED.
+        """
+        params = {"state": self.States.REJECTED}
+        return self._put(f"cve-id/{cve_id}", params=params).json()
+
+    def move_to_reserved(self, cve_id):
+        """Move a CVE ID to the RESERVED state without a CVE record.
+
+        This is only possible if the CVE ID is in the REJECTED state without a CVE record.
+
+        Moving a CVE ID to the RESERVED state is not possible if it has already been PUBLISHED.
+        """
+        params = {"state": self.States.RESERVED}
+        return self._put(f"cve-id/{cve_id}", params=params).json()
 
     def reserve(self, count: int, random: bool, year: str) -> dict:
         """Reserve a set of CVE IDs.

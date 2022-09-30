@@ -228,7 +228,8 @@ def cli(
 @cli.command()
 @click.argument("cve_id", callback=validate_cve)
 @click.option(
-    "--json",
+    "-j",
+    "--cve-json",
     "cve_json_str",
     required=True,
     type=click.STRING,
@@ -238,13 +239,16 @@ def cli(
 @click.pass_context
 @handle_cve_api_error
 def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) -> None:
-    """Publish a CVE record for an already-reserved CVE ID.
+    """Publish a CVE record for a reserved (or rejected) CVE ID.
 
-    Will update if the CVE record already exists.
+    If the CVE is already published, this action will update its record. A published CVE can only be
+    moved to the rejected state with an appropriate reject record (see `cve reject`). A published
+    CVE cannot be moved back to the reserved state.
+
+    Example:
 
     \b
-    cve publish 'CVE-2022-1234' --json \\
-    '{"affected": [], "descriptions": [], "providerMetadata": {}, "references": []}'
+    cve publish CVE-2022-1234 -j '{"affected": [], "descriptions": [], "references": {}, ...}'
 
     For information on the required properties in a given CVE JSON record, see the
     `cnaPublishedContainer` schema in:\n
@@ -259,9 +263,9 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
     if ctx.obj.interactive:
         click.echo("You are about to publish a CVE record for ", nl=False)
         click.secho(cve_id, bold=True, nl=False)
-        click.echo(" from the following input:\n\n", nl=False)
+        click.echo(" using the following input:\n\n", nl=False)
         click.secho(cve_json_str, bold=True, nl=False)
-        if not click.confirm("\n\nThis operation cannot be reversed; do you want to continue?"):
+        if not click.confirm("\n\nDo you want to continue?"):
             click.echo("Exiting...")
             sys.exit(0)
         click.echo()
@@ -286,9 +290,9 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
 @cli.command()
 @click.argument("cve_id", callback=validate_cve)
 @click.option(
-    "--json",
+    "-j",
+    "--cve-json",
     "cve_json_str",
-    required=True,
     type=click.STRING,
     help="JSON body of CVE record to reject.",
 )
@@ -298,32 +302,55 @@ def publish(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool)
 def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) -> None:
     """Reject a CVE record for a reserved or published CVE ID.
 
-    Will update if the CVE record already exists.
+    If the CVE is already rejected, this action will update its record if one is supplied.
+    A rejected CVE with a record can only be moved to the published state (see `cve publish`).
+    A rejected CVE without a record can be moved to the reserved state. A published CVE can only
+    be rejected with an accompanying record. Reserved CVEs can be rejected with or without a record.
+
+    Example:
 
     \b
-    cve reject 'CVE-2022-1234' --json '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
+    cve reject CVE-2022-1234 -j '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
 
     For information on the required properties in a given CVE JSON record, see the
     `cnaRejectedContainer` schema in:\n
     https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
     """
-    try:
-        cve_json = json.loads(cve_json_str)
-    except json.JSONDecodeError as exc:
-        click.echo("CVE data was not valid JSON. Error was:\n")
-        click.secho(str(exc))
-        return
+    cve_json = None
+    if cve_json_str:
+        try:
+            cve_json = json.loads(cve_json_str)
+        except json.JSONDecodeError as exc:
+            click.echo("CVE data was not valid JSON. Error was:\n")
+            click.secho(str(exc))
+            return
+
     if ctx.obj.interactive:
         click.echo("You are about to reject ", nl=False)
         click.secho(cve_id, bold=True, nl=False)
-        click.echo(" using the following input:\n\n", nl=False)
-        click.secho(cve_json_str, bold=True, nl=False)
-        if not click.confirm("\n\nThis operation cannot be reversed; do you want to continue?"):
+        if cve_json:
+            click.echo(" using the following input:\n\n", nl=False)
+            click.secho(cve_json_str)
+        else:
+            click.echo(" without providing a reject record.")
+        if not click.confirm("\nDo you want to continue?"):
             click.echo("Exiting...")
             sys.exit(0)
         click.echo()
 
     cve_api = ctx.obj.cve_api
+
+    # Reject a CVE ID without a record
+    if cve_json is None:
+        response_data = cve_api.move_to_rejected(cve_id)
+        if print_raw:
+            print_json_data(response_data)
+        else:
+            click.echo("Rejected the following CVE:\n")
+            print_cve_id(response_data["updated"])
+        return
+
+    # Reject a CVE ID with a record
     try:
         response_data = cve_api.reject(cve_id, cve_json)
         created = True
@@ -333,11 +360,39 @@ def reject(ctx: click.Context, cve_id: str, cve_json_str: str, print_raw: bool) 
             raise exc
         response_data = cve_api.update_rejected(cve_id, cve_json)
         created = False
+
     if print_raw:
         print_json_data(response_data)
     else:
         click.echo("Rejected the following CVE:\n")
         print_cve_record(response_data["created"] if created else response_data["updated"])
+
+
+@cli.command()
+@click.argument("cve_id", callback=validate_cve)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def undo_reject(ctx: click.Context, cve_id: str, print_raw: bool) -> None:
+    """Move a rejected CVE ID without a record back to the reserved state."""
+    if ctx.obj.interactive:
+        click.echo("You are about to move ", nl=False)
+        click.secho(cve_id, bold=True, nl=False)
+        click.echo(" back to the reserved state.", nl=False)
+        if not click.confirm(
+            "\nThis is only allowed for CVE IDs without a record. Do you want to continue?"
+        ):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    response_data = cve_api.move_to_reserved(cve_id)
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("Moved the following CVE to reserved:\n")
+        print_cve_id(response_data["updated"])
 
 
 @cli.command()
@@ -464,7 +519,7 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
 @click.option("--year", callback=validate_year, help="Filter by year.")
 @click.option(
     "--state",
-    type=click.Choice(["reserved", "published", "rejected"], case_sensitive=False),
+    type=click.Choice(CveApi.States.values(), case_sensitive=False),
     help="Filter by reservation state.",
 )
 @click.option(
