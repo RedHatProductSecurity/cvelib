@@ -139,7 +139,9 @@ def test_cve_list():
         )
 
 
-def test_cve_create():
+@mock.patch("cvelib.cli.CveApi.publish")
+@mock.patch("cvelib.cli.CveApi.update_published")
+def test_cve_publish(update_published, publish):
     cve_id = "CVE-2001-0635"
     cna_dict = {
         "affected": [
@@ -189,22 +191,25 @@ def test_cve_create():
     cna_text = json.dumps(cna_dict)
     response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
 
-    with mock.patch("cvelib.cli.CveApi.publish") as publish:
-        publish.return_value = response_dict
-        runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["publish", cve_id, "--json", cna_text])
-        assert result.exit_code == 0, result.output
-        assert result.output == (
-            "Published the following CVE:\n"
-            "\n"
-            f"{cve_id}\n"
-            "├─ State:\tPUBLISHED\n"
-            "├─ Owning CNA:\ttest_org\n"
-            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
-        )
+    publish.return_value = response_dict
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["publish", cve_id, "--cve-json", cna_text])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Published the following CVE:\n"
+        "\n"
+        f"{cve_id}\n"
+        "├─ State:\tPUBLISHED\n"
+        "├─ Owning CNA:\ttest_org\n"
+        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+    )
+    assert not update_published.called
 
 
-def test_cve_reject():
+@mock.patch("cvelib.cli.CveApi.reject")
+@mock.patch("cvelib.cli.CveApi.update_rejected")
+@mock.patch("cvelib.cli.CveApi.move_to_rejected")
+def test_cve_reject_with_record(move_to_rejected, update_rejected, reject):
     cve_id = "CVE-2001-0635"
     cna_dict = {
         "providerMetadata": {
@@ -236,19 +241,86 @@ def test_cve_reject():
     cna_text = json.dumps(cna_dict)
     response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
 
-    with mock.patch("cvelib.cli.CveApi.reject") as reject:
-        reject.return_value = response_dict
-        runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["reject", cve_id, "--json", cna_text])
-        assert result.exit_code == 0, result.output
-        assert result.output == (
-            "Rejected the following CVE:\n"
-            "\n"
-            f"{cve_id}\n"
-            "├─ State:\tREJECTED\n"
-            "├─ Owning CNA:\ttest_org\n"
-            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
-        )
+    reject.return_value = response_dict
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["reject", cve_id, "--cve-json", cna_text])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Rejected the following CVE:\n"
+        "\n"
+        f"{cve_id}\n"
+        "├─ State:\tREJECTED\n"
+        "├─ Owning CNA:\ttest_org\n"
+        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+    )
+    assert not update_rejected.called
+    assert not move_to_rejected.called
+
+
+@mock.patch("cvelib.cli.CveApi.reject")
+@mock.patch("cvelib.cli.CveApi.update_rejected")
+@mock.patch("cvelib.cli.CveApi.move_to_rejected")
+def test_cve_reject_without_record(move_to_rejected, update_rejected, reject):
+    cve_id = "CVE-2099-1000"
+    reject_response = {
+        "updated": {
+            "cve_id": "CVE-2099-1000",
+            "cve_year": "2099",
+            "owning_cna": "acme",
+            "requested_by": {"cna": "acme", "user": "jack@example.com"},
+            "reserved": "2021-06-29T12:33:52.892Z",
+            "state": "REJECTED",
+            "time": {"created": "2021-06-29T12:33:52.892Z", "modified": "2021-06-29T12:33:52.892Z"},
+        },
+        "message": f"{cve_id} record was successfully updated.",
+    }
+
+    move_to_rejected.return_value = reject_response
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["reject", cve_id])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Rejected the following CVE:\n"
+        "\n"
+        f"{cve_id}\n"
+        "├─ State:\tREJECTED\n"
+        "├─ Owning CNA:\tacme\n"
+        "├─ Reserved by:\tjack@example.com (acme)\n"
+        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+    )
+    assert not update_rejected.called
+    assert not reject.called
+
+
+@mock.patch("cvelib.cli.CveApi.move_to_reserved")
+def test_cve_undo_reject(move_to_reserved):
+    cve_id = "CVE-2099-1000"
+    reserved_response = {
+        "updated": {
+            "cve_id": "CVE-2099-1000",
+            "cve_year": "2099",
+            "owning_cna": "acme",
+            "requested_by": {"cna": "acme", "user": "jack@example.com"},
+            "reserved": "2021-06-29T12:33:52.892Z",
+            "state": "RESERVED",
+            "time": {"created": "2021-06-29T12:33:52.892Z", "modified": "2021-06-29T12:33:52.892Z"},
+        },
+        "message": f"{cve_id} record was successfully updated.",
+    }
+
+    move_to_reserved.return_value = reserved_response
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["undo-reject", cve_id])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Moved the following CVE to reserved:\n"
+        "\n"
+        f"{cve_id}\n"
+        "├─ State:\tRESERVED\n"
+        "├─ Owning CNA:\tacme\n"
+        "├─ Reserved by:\tjack@example.com (acme)\n"
+        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+    )
 
 
 def test_quota():
