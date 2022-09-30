@@ -1,4 +1,4 @@
-.TH "CVE" "1" "2022-04-20" "0.7.0" "cve Manual"
+.TH "CVE" "1" "2022-09-30" "1.0.0" "cve Manual"
 .SH NAME
 cve \- A CLI interface for the CVE Services API.
 .SH SYNOPSIS
@@ -30,12 +30,24 @@ Confirm create/update actions before execution (env var: CVE_INTERACTIVE)
 Show the version and exit.
 .SH COMMANDS
 .PP
+\fBpublish\fP
+  Publish a CVE record for a reserved (or...
+  See \fBcve-publish(1)\fP for full documentation on the \fBpublish\fP command.
+.PP
+\fBreject\fP
+  Reject a CVE record for a reserved or...
+  See \fBcve-reject(1)\fP for full documentation on the \fBreject\fP command.
+.PP
+\fBundo-reject\fP
+  Move a rejected CVE ID without a record...
+  See \fBcve-undo-reject(1)\fP for full documentation on the \fBundo-reject\fP command.
+.PP
 \fBreserve\fP
   Reserve one or more CVE IDs.
   See \fBcve-reserve(1)\fP for full documentation on the \fBreserve\fP command.
 .PP
 \fBshow\fP
-  Display a specific CVE ID owned by your CNA.
+  Display a specific CVE ID (and optionally...
   See \fBcve-show(1)\fP for full documentation on the \fBshow\fP command.
 .PP
 \fBlist\fP
