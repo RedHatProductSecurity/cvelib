@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.0.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.7.0...1.0.0) (Oct 3, 2022)
+
+* Added support for CVE Services 2.1:
+  * New subcommands: `publish`, `reject`, `undo-reject`.
+  * The `show` subcommand now indluced a `--show-record` option to view a CVE's record.
+  * Added several new methods in the `CveApi` interface to reflect new CVE Services API endpoints.
+* Fixed sorting by the reserved timestamp when using the `list` subcommand.
+
 ## [0.7.0](https://github.com/RedHatProductSecurity/cvelib/compare/0.6.0...0.7.0) (Feb 6, 2022)
 
 * Reverted commit c1f5edeb2cb1a39dfbab1813a3bc68ae4c04661d, which is (for
