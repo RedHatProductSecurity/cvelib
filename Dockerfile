@@ -5,7 +5,7 @@ LABEL maintainer="Red Hat Product Security Dev - Red Hat, Inc." \
       summary="Container image for the cvelib CLI utility." \
       distribution-scope="public"
 
-RUN dnf --nodocs -y install python3-pip && dnf clean
+RUN dnf --nodocs -y install python3-pip && dnf clean all
 
 RUN pip3 install --no-cache-dir cvelib
 
