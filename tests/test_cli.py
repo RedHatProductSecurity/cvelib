@@ -139,9 +139,7 @@ def test_cve_list():
         )
 
 
-@mock.patch("cvelib.cli.CveApi.publish")
-@mock.patch("cvelib.cli.CveApi.update_published")
-def test_cve_publish(update_published, publish):
+class TestCvePublish:
     cve_id = "CVE-2001-0635"
     cna_dict = {
         "affected": [
@@ -173,8 +171,7 @@ def test_cve_publish(update_published, publish):
             },
         ],
     }
-
-    cve_dict = {
+    cve_response_data = {
         "containers": {"cna": cna_dict},
         "cveMetadata": {
             "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
@@ -188,22 +185,56 @@ def test_cve_publish(update_published, publish):
         "dataType": "CVE_RECORD",
         "dataVersion": "5.0",
     }
-    cna_text = json.dumps(cna_dict)
-    response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
 
-    publish.return_value = response_dict
-    runner = CliRunner()
-    result = runner.invoke(cli, DEFAULT_OPTS + ["publish", cve_id, "--cve-json", cna_text])
-    assert result.exit_code == 0, result.output
-    assert result.output == (
-        "Published the following CVE:\n"
-        "\n"
-        f"{cve_id}\n"
-        "├─ State:\tPUBLISHED\n"
-        "├─ Owning CNA:\ttest_org\n"
-        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
-    )
-    assert not update_published.called
+    @mock.patch("cvelib.cli.CveApi.publish")
+    @mock.patch("cvelib.cli.CveApi.update_published")
+    def test_cve_publish(self, update_published, publish):
+        cna_text = json.dumps(self.cna_dict)
+        response_dict = {
+            "created": self.cve_response_data,
+            "message": f"{self.cve_id} record was " f"successfully created.",
+        }
+        publish.return_value = response_dict
+
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["publish", self.cve_id, "--cve-json", cna_text])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Published the following CVE:\n"
+            "\n"
+            f"{self.cve_id}\n"
+            "├─ State:\tPUBLISHED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        )
+        assert not update_published.called
+
+    @mock.patch("cvelib.cli.CveApi.publish")
+    @mock.patch("cvelib.cli.CveApi.update_published")
+    def test_cve_publish_from_file(self, update_published, publish, tmp_path):
+        with open(tmp_path / "cve.json", "w+") as cve_json_file:
+            cve_json_file.write(json.dumps(self.cna_dict))
+
+        response_dict = {
+            "created": self.cve_response_data,
+            "message": f"{self.cve_id} record was " f"successfully created.",
+        }
+        publish.return_value = response_dict
+
+        runner = CliRunner()
+        result = runner.invoke(
+            cli, DEFAULT_OPTS + ["publish", self.cve_id, "--cve-json-file", cve_json_file.name]
+        )
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Published the following CVE:\n"
+            "\n"
+            f"{self.cve_id}\n"
+            "├─ State:\tPUBLISHED\n"
+            "├─ Owning CNA:\ttest_org\n"
+            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        )
+        assert not update_published.called
 
 
 @mock.patch("cvelib.cli.CveApi.reject")
