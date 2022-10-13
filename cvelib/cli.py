@@ -97,8 +97,12 @@ def print_user(user: dict) -> None:
 
 
 def get_full_name(user_data: dict) -> Optional[str]:
-    name_data = user_data["name"]
-    return f"{name_data.get('first', '')} {name_data.get('last', '')}".strip() or None
+    # If no name values are defined on a user, the entire `name` object is not returned in the
+    # user data response; see https://github.com/CVEProject/cve-services/issues/901.
+    name = user_data.get("name", {})
+    if name:
+        return f"{name.get('first', '')} {name.get('last', '')}".strip() or None
+    return None
 
 
 def bool_to_text(value: Optional[bool]) -> str:
