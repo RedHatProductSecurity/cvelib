@@ -158,10 +158,10 @@ class CveApi:
 
     def list_cves(
         self,
-        year: str = None,
-        state: str = None,
-        reserved_lt: datetime = None,
-        reserved_gt: datetime = None,
+        year: Optional[str] = None,
+        state: Optional[str] = None,
+        reserved_lt: Optional[datetime] = None,
+        reserved_gt: Optional[datetime] = None,
     ) -> Iterator[dict]:
         params = {}
         if year:
