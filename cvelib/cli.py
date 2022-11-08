@@ -541,7 +541,7 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
         # Serialize the CVE ID data and CVE record into an array for easier parsing if we're
         # showing the record as well. If not, just display the CVE ID data.
         if show_record:
-            print_json_data({ "cveMetaData" : cve_id_data, "containers" : cve_record_data["containers"]})
+            print_json_data(cve_record_data)
         else:
             print_json_data(cve_id_data)
     else:
