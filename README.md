@@ -176,6 +176,28 @@ cve org users
 
 See `-h/--help` of any command for a complete list of sub-commands and options.
 
+## Library Usage Example
+
+`cvelib` also exposes a Python interface to CVE Service that can be used within any Python application that includes
+`cvelib` as its dependency. Here is an example Python function that fetches the CVE record for a given CVE ID:
+
+```python
+import os
+from cvelib.cve_api import CveApi
+
+def fetch_cve_record(cve_id: str) -> dict:
+    cve_api = CveApi(
+        username=os.getenv("CVE_USER"),
+        org=os.getenv("CVE_ORG"),
+        api_key=os.getenv("CVE_API_KEY"),
+    )
+    cve = cve_api.show_cve_record(cve_id)
+    return cve
+```
+
+For more information, see the individual methods defined in the
+[`CveApi` interface](https://github.com/RedHatProductSecurity/cvelib/blob/master/cvelib/cve_api.py).
+
 ## Other CVE Services Clients
 
 - Client-side library written in JavaScript: https://github.com/xdrr/cve.js
