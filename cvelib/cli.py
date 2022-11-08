@@ -538,8 +538,8 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
                 raise exc
 
     if print_raw:
-        # Serialize the CVE ID data and CVE record into an array for easier parsing if we're
-        # showing the record as well. If not, just display the CVE ID data.
+        # Display CVE record data only if we're showing the record. Otherwise, show the CVE ID
+        # data only.
         if show_record:
             print_json_data(cve_record_data)
         else:
