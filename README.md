@@ -6,7 +6,7 @@ A library and a command line interface for the CVE Services API.
 
 ## Requirements
 
-- Python version 3.6 or greater
+- Python version 3.7 or greater
 - [pip](https://pypi.org/project/pip/)
 
 ## Installation
