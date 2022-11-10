@@ -268,13 +268,19 @@ def publish(
     moved to the rejected state with an appropriate reject record (see `cve reject`). A published
     CVE cannot be moved back to the reserved state.
 
-    Example:
+    The CVE record can be specified as a string:
 
-    cve publish CVE-2022-1234 -j '{"affected": [], "descriptions": [], "references": {}, ...}'
+      cve publish CVE-2022-1234 -j '{"affected": [], "descriptions": [], "references": {}, ...}'
 
-    For information on the required properties in a given CVE JSON record, see the
-    `cnaPublishedContainer` schema in:\n
+    Or passed in a file:
+
+      cve publish CVE-2022-1234 -f v5_record.json
+
+    For information on the required properties in a given CVE JSON record, see the schema in:\n
     https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
+
+    Because the CVE Services API only expects the cnaPublishedContainer contents of the full record,
+    the record you pass to this command can specify just that data, and not the full record.
     """
     if cve_json_file is not None and cve_json_str is not None:
         raise click.BadParameter(
@@ -354,13 +360,19 @@ def reject(
     A rejected CVE without a record can be moved to the reserved state. A published CVE can only
     be rejected with an accompanying record. Reserved CVEs can be rejected with or without a record.
 
-    Example:
+    The CVE reject record can be specified as a string:
 
-    cve reject CVE-2022-1234 -j '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
+      cve reject CVE-2022-1234 -j '{"rejectedReasons": [{"lang": "en", "value": "A reason."}]}'
 
-    For information on the required properties in a given CVE JSON record, see the
-    `cnaRejectedContainer` schema in:\n
+    Or passed in a file:
+
+      cve reject CVE-2022-1234 -f v5_reject_record.json
+
+    For information on the required properties in a given CVE JSON record, see the schema in:\n
     https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
+
+    Because the CVE Services API only expects the cnaRejectedContainer contents of the full record,
+    the record you pass to this command can specify just that data, and not the full record.
     """
     if cve_json_file is not None and cve_json_str is not None:
         raise click.BadParameter(
