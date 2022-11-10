@@ -1,15 +1,49 @@
+import json
 from datetime import datetime
 from enum import Enum
+from pathlib import Path
 from typing import Iterator, Optional
 from urllib.parse import urljoin
 
 import requests
+from jsonschema import Draft7Validator
+
+SCHEMA_DIR = Path(__file__).parent / "schemas"
 
 
 class Constants(str, Enum):
     @classmethod
     def values(cls):
         return tuple(m.value for m in cls)
+
+    def __str__(self) -> str:
+        return str(self.value)
+
+
+class CveRecordValidationError(Exception):
+    def __init__(self, message, errors):
+        super().__init__(message)
+        self.errors = errors
+
+
+class CveRecord:
+    class Schemas(Constants):
+        CNA_PUBLISHED = next(SCHEMA_DIR.glob("published_cna_container_*.json"))
+        CNA_REJECTED = next(SCHEMA_DIR.glob("rejected_cna_container_*.json"))
+        ADP = next(SCHEMA_DIR.glob("adp_container_*.json"))
+        V5_SCHEMA = next(SCHEMA_DIR.glob("CVE_JSON_5.0_bundled_*.json"))
+
+    @classmethod
+    def validate(cls, cve_json: dict, schema_path: str) -> None:
+        with open(schema_path) as schema_file:
+            schema = json.load(schema_file)
+
+        validator = Draft7Validator(schema)
+        errors = [error.message for error in sorted(validator.iter_errors(cve_json), key=str)]
+        if errors:
+            raise CveRecordValidationError(
+                f"Schema validation against {schema_path} failed", errors
+            )
 
 
 class CveApi:
@@ -88,28 +122,41 @@ class CveApi:
         return self._http_request("put", path, **kwargs)
 
     def publish(self, cve_id: str, cve_json: dict) -> dict:
+    def publish(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
+        if validate:
+            CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
+
         cve_json = {"cnaContainer": cve_json}
         response = self._post(f"cve/{cve_id}/cna", json=cve_json)
         response.raise_for_status()
         return response.json()
 
-    def update_published(self, cve_id: str, cve_json: dict) -> dict:
+    def update_published(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Update a published CVE record from a JSON object representing the CNA container data."""
+        if validate:
+            CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
+
         cve_json = {"cnaContainer": cve_json}
         response = self._put(f"cve/{cve_id}/cna", json=cve_json)
         response.raise_for_status()
         return response.json()
 
-    def reject(self, cve_id: str, cve_json: dict) -> dict:
+    def reject(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Reject a CVE from a JSON object representing the CNA container data."""
+        if validate:
+            CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
+
         cve_json = {"cnaContainer": cve_json}
         response = self._post(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
         return response.json()
 
-    def update_rejected(self, cve_id: str, cve_json: dict) -> dict:
+    def update_rejected(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Update a rejected CVE record from a JSON object representing the CNA container data."""
+        if validate:
+            CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
+
         cve_json = {"cnaContainer": cve_json}
         response = self._put(f"cve/{cve_id}/reject", json=cve_json)
         response.raise_for_status()
