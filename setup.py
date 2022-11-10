@@ -20,6 +20,7 @@ dev_require = [
     "tox",
     "types-click",
     "types-requests",
+    "types-jsonschema",
 ]
 
 extras_require = {
