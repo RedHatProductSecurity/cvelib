@@ -1,22 +1,30 @@
-from setuptools import setup
+from setuptools import find_namespace_packages, setup
 
-requires = [
+install_requires = [
     "click>=7.1.2",
     "requests>=2.24.0",
+    "jsonschema>=4.17.0",
+]
+
+tests_require = [
+    "pytest",
+]
+
+dev_require = [
+    *tests_require,
+    "black",
+    "click-man",
+    "flake8",
+    "isort",
+    "mypy",
+    "tox",
+    "types-click",
+    "types-requests",
 ]
 
 extras_require = {
-    "dev": [
-        "black",
-        "click-man",
-        "flake8",
-        "isort",
-        "mypy",
-        "pytest",
-        "tox",
-        "types-click",
-        "types-requests",
-    ]
+    "dev": dev_require,
+    "test": tests_require,
 }
 
 with open("README.md") as f:
@@ -52,8 +60,8 @@ setup(
         "Programming Language :: Python :: 3.11",
     ],
     include_package_data=True,
-    packages=["cvelib"],
-    install_requires=requires,
+    packages=find_namespace_packages(),
+    install_requires=install_requires,
     extras_require=extras_require,
     entry_points={
         "console_scripts": [
