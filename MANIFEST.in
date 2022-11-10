@@ -1,0 +1,7 @@
+include LICENSE
+include *.md
+recursive-include tests/ *.py *.md *.json
+graft man
+graft cvelib/schemas
+global-exclude __pycache__
+global-exclude *.py[co]
