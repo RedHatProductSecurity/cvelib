@@ -10,7 +10,7 @@ import click
 import requests
 
 from . import __version__
-from .cve_api import CveApi
+from .cve_api import CveApi, CveRecordValidationError
 
 CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
 CONTEXT_SETTINGS = {
@@ -133,6 +133,11 @@ def handle_cve_api_error(func: Callable) -> Callable:
                 except ValueError:
                     details = exc.response.content
             print_error(error, details)
+        except CveRecordValidationError as exc:
+            click.secho("ERROR: ", bold=True, nl=False)
+            click.echo("CVE record is not valid against the v5 JSON schema:")
+            for error in exc.errors:
+                click.echo(f"  {error}")
         sys.exit(1)
 
     return wrapped
