@@ -77,7 +77,7 @@ def print_table(lines: Sequence[Sequence[str]]) -> None:
 
 
 def print_json_data(data: Union[dict, list]) -> None:
-    click.echo(json.dumps(data, indent=4, sort_keys=True))
+    click.echo(json.dumps(data, indent=2, sort_keys=True))
 
 
 def print_user(user: dict) -> None:
