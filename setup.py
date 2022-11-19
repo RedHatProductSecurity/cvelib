@@ -3,7 +3,7 @@ from setuptools import find_namespace_packages, setup
 install_requires = [
     "click>=7.1.2",
     "requests>=2.24.0",
-    "jsonschema>=4.17.0",
+    "jsonschema>=4.7.2",
 ]
 
 tests_require = [
