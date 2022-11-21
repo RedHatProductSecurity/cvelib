@@ -137,6 +137,13 @@ def test_cve_list():
             "CVE-2021-3002   PUBLISHED   acme         ann (acme)    Thu Jan 14 18:32:57 2021\n"
             "CVE-2021-3003   REJECTED    acme         eve (corp)    Thu Jan 14 18:34:50 2021\n"
         )
+        result = runner.invoke(cli, DEFAULT_OPTS + ["list", "--no-header"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "CVE-2021-3001   RESERVED    acme   bob (acme)   Thu Jan 14 18:32:19 2021\n"
+            "CVE-2021-3002   PUBLISHED   acme   ann (acme)   Thu Jan 14 18:32:57 2021\n"
+            "CVE-2021-3003   REJECTED    acme   eve (corp)   Thu Jan 14 18:34:50 2021\n"
+        )
 
 
 class TestCvePublish:
