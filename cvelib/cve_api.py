@@ -34,7 +34,18 @@ class CveRecord:
         V5_SCHEMA = next(SCHEMA_DIR.glob("CVE_JSON_5.0_bundled_*.json"))
 
     @classmethod
-    def validate(cls, cve_json: dict, schema_path: str) -> None:
+    def validate(cls, cve_json: dict, schema_path: Optional[str] = None) -> None:
+        """Validate a CVE record against a JSON schema.
+
+        Optionally, specify a path to a JSON schema file with which to validate the record; if not
+        specified, the Published CNA container schema bundled in cvelib/schemas/ is used. All
+        other schemas in that directory must be explicitly specified, e.g.:
+
+        CveRecord.validate(cve_json, schema_path=CveRecord.Schemas.CNA_REJECTED)
+        """
+        if schema_path is None:
+            schema_path = cls.Schemas.CNA_PUBLISHED
+
         with open(schema_path) as schema_file:
             schema = json.load(schema_file)
 
