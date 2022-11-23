@@ -61,7 +61,7 @@ def print_cve_record(cve: dict) -> None:
     click.echo(f"└─ Reserved on:\t{human_ts(cve['cveMetadata']['dateReserved'])}")
 
 
-def print_table(lines: Sequence[Sequence[str]]) -> None:
+def print_table(lines: Sequence[Sequence[str]], highlight_header: bool = True) -> None:
     """Print tabulated data based on the widths of the longest values in each column."""
     col_widths = []
     for item_index in range(len(lines[0])):
@@ -70,7 +70,7 @@ def print_table(lines: Sequence[Sequence[str]]) -> None:
 
     for idx, line in enumerate(lines):
         text = "".join(f"{value:<{width + 3}}" for value, width in zip(line, col_widths)).strip()
-        if idx == 0:
+        if idx == 0 and highlight_header:
             click.secho(text, bold=True)
         else:
             click.echo(text)
@@ -576,6 +576,9 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
 @cli.command(name="list")
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.option(
+    "-N", "--no-header", default=False, is_flag=True, help="Do not print header in table output."
+)
+@click.option(
     "--sort-by",
     type=click.Choice(["cve_id", "state", "user", "reserved_ts"], case_sensitive=False),
     default="cve_id",
@@ -595,7 +598,9 @@ def show_cve(ctx: click.Context, show_record: bool, print_raw: bool, cve_id: str
 )
 @click.pass_context
 @handle_cve_api_error
-def list_cves(ctx: click.Context, print_raw: bool, sort_by: str, **query: dict) -> None:
+def list_cves(
+    ctx: click.Context, print_raw: bool, no_header: bool, sort_by: str, **query: dict
+) -> None:
     """Filter and list reserved CVE IDs owned by your CNA."""
     cve_api = ctx.obj.cve_api
     cves = list(cve_api.list_cves(**query))
@@ -618,7 +623,10 @@ def list_cves(ctx: click.Context, print_raw: bool, sort_by: str, **query: dict) 
         elif key == "state":
             cves.sort(key=lambda x: x["state"])
 
-    lines = [("CVE ID", "STATE", "OWNING CNA", "RESERVED BY", "RESERVED ON")]
+    if no_header:
+        lines = []
+    else:
+        lines = [("CVE ID", "STATE", "OWNING CNA", "RESERVED BY", "RESERVED ON")]
     for cve in cves:
         lines.append(
             (
@@ -629,7 +637,7 @@ def list_cves(ctx: click.Context, print_raw: bool, sort_by: str, **query: dict) 
                 human_ts(cve["reserved"]),
             )
         )
-    print_table(lines)
+    print_table(lines, highlight_header=not no_header)
 
 
 @cli.command()
@@ -858,9 +866,12 @@ def show_org(ctx: click.Context, print_raw: bool) -> None:
 
 @show_org.command()
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.option(
+    "-N", "--no-header", default=False, is_flag=True, help="Do not print header in table output."
+)
 @click.pass_context
 @handle_cve_api_error
-def users(ctx: click.Context, print_raw: bool) -> None:
+def users(ctx: click.Context, print_raw: bool, no_header: bool) -> None:
     """List all users in your organization."""
     cve_api = ctx.obj.cve_api
     org_users = list(cve_api.list_users())
@@ -881,9 +892,10 @@ def users(ctx: click.Context, print_raw: bool) -> None:
             )
         )
     lines.sort(key=lambda x: x[0])  # Sort by username
-    # Add header after sorting
-    lines.insert(0, ("USERNAME", "NAME", "ROLES", "ACTIVE", "CREATED", "MODIFIED"))
-    print_table(lines)
+    if not no_header:
+        # Add header after sorting
+        lines.insert(0, ("USERNAME", "NAME", "ROLES", "ACTIVE", "CREATED", "MODIFIED"))
+    print_table(lines, highlight_header=not no_header)
 
 
 @cli.command()
