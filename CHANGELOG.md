@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.1.0...1.2.0) (Dec 2, 2022)
+
+* The `list` and `users` commands have a new `-N/--no-header` option that skips printing a header in the table 
+  output. (#55).
+* The bundled CNA Published JSON schema is used by default when calling `CveRecord.validate()` (#57).
+* The `jsonschema` required dependency was relaxed to an older version (#54).
+
 ## [1.1.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.0.0...1.1.0) (Nov 11, 2022)
 
 * The `publish` and `reject` subcommands have a new `-f/--cve-json-file` option that allows submitting CVE records from
