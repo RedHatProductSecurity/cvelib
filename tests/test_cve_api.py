@@ -27,9 +27,14 @@ def test_container_schema_validation():
 
 
 def test_invalid_record_schema_validation():
-    with pytest.raises(CveRecordValidationError, match="^Schema validation.*failed$") as exc_info:
+    with pytest.raises(CveRecordValidationError, match="^Schema validation.*failed") as exc_info:
         CveRecord.validate({}, CveRecord.Schemas.CNA_REJECTED)
 
+    # Verify errors are reported in exception message
+    assert "'providerMetadata' is a required property" in str(exc_info.value)
+    assert "'rejectedReasons' is a required property" in str(exc_info.value)
+
+    # Verify error objects are present in exception object.
     exc_errors = exc_info._excinfo[1].errors
-    assert "'providerMetadata' is a required property" in exc_errors
-    assert "'rejectedReasons' is a required property" in exc_errors
+    assert "'providerMetadata' is a required property" in exc_errors[0].message
+    assert "'rejectedReasons' is a required property" in exc_errors[1].message

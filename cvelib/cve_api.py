@@ -50,10 +50,11 @@ class CveRecord:
             schema = json.load(schema_file)
 
         validator = Draft7Validator(schema)
-        errors = [error.message for error in sorted(validator.iter_errors(cve_json), key=str)]
+        errors = sorted(validator.iter_errors(cve_json), key=lambda e: e.message)
         if errors:
+            errors_str = "\n".join(e.message for e in errors)
             raise CveRecordValidationError(
-                f"Schema validation against {schema_path} failed", errors
+                f"Schema validation against {schema_path} failed:\n{errors_str}", errors
             )
 
 
