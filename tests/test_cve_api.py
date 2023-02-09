@@ -1,4 +1,5 @@
 import json
+import pickle
 from pathlib import Path
 
 import pytest
@@ -38,3 +39,17 @@ def test_invalid_record_schema_validation():
     exc_errors = exc_info._excinfo[1].errors
     assert "'providerMetadata' is a required property" in exc_errors[0].message
     assert "'rejectedReasons' is a required property" in exc_errors[1].message
+
+
+def test_cve_record_validation_error_is_picklable():
+    try:
+        CveRecord.validate({})
+    except CveRecordValidationError as exc:
+        assert "'affected' is a required property" in str(exc)
+        assert "'affected' is a required property" == exc.errors[0].message
+        pickled = pickle.dumps(exc)
+        unpickled_exc = pickle.loads(pickled)
+        assert "'affected' is a required property" in str(unpickled_exc)
+        # Errors do not survive pickling because they include jsonschema-specific objects that
+        # are not picklable.
+        assert unpickled_exc.errors is None
