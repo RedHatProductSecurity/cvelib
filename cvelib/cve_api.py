@@ -21,9 +21,13 @@ class Constants(str, Enum):
 
 
 class CveRecordValidationError(Exception):
-    def __init__(self, message, errors):
-        super().__init__(message)
+    def __init__(self, *args, **kwargs):
+        errors = kwargs.pop("errors", None)
         self.errors = errors
+        super().__init__(*args, **kwargs)
+
+    def __reduce__(self):
+        return CveRecordValidationError, (self.args,)
 
 
 class CveRecord:
@@ -54,7 +58,7 @@ class CveRecord:
         if errors:
             errors_str = "\n".join(e.message for e in errors)
             raise CveRecordValidationError(
-                f"Schema validation against {schema_path} failed:\n{errors_str}", errors
+                f"Schema validation against {schema_path} failed:\n{errors_str}", errors=errors
             )
 
 
