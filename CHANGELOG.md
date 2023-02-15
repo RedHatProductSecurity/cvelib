@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.2.1](https://github.com/RedHatProductSecurity/cvelib/compare/1.2.0...1.2.1) (Feb 16, 2023)
+
+* Improved `CveRecordValidationError` exception error message.
+
 ## [1.2.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.1.0...1.2.0) (Dec 2, 2022)
 
 * The `list` and `users` commands have a new `-N/--no-header` option that skips printing a header in the table 
