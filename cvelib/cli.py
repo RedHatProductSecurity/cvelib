@@ -2,7 +2,7 @@ import json
 import re
 import sys
 from collections import defaultdict
-from datetime import date, datetime
+from datetime import date, datetime, timezone
 from functools import wraps
 from typing import Any, Callable, DefaultDict, List, Optional, Sequence, TextIO, Union
 
@@ -39,7 +39,32 @@ def validate_year(
 
 
 def human_ts(ts: str) -> str:
-    return datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").strftime("%c")
+    """Return a consistent, human-readable datetime.
+
+    If the format cannot be parsed against RFC3339 or ISO8601, return the original raw value.
+
+    Note: this helper function should only be used for printing datetime values.
+    """
+    dt = None
+    for dt_format in (
+        "%Y-%m-%dT%H:%M:%S",  # 2019-03-27T19:20:26
+        "%Y-%m-%dT%H:%M:%S.%f%z",  # 2019-03-27T19:20:26.123+01:00
+        "%Y-%m-%dT%H:%M:%S%z",  # 2019-03-27T19:20:26+01:00
+        "%Y-%m-%dT%H:%M:%S.%fZ",  # 2019-03-27T19:20:26.123Z
+        "%Y-%m-%dT%H:%M:%S%Z",  # 2019-03-27T19:20:26Z
+    ):
+        try:
+            dt = datetime.strptime(ts, dt_format)
+        except ValueError:
+            pass
+        else:
+            break
+    if dt:
+        if not dt.tzinfo:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.strftime("%c %z")
+    else:
+        return ts
 
 
 def print_cve_id(cve: dict) -> None:
