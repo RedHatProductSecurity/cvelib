@@ -29,7 +29,8 @@ def test_cve_id_show(show_cve_record, show_cve_id):
         "├─ State:\tRESERVED\n"
         "├─ Owning CNA:\tacme\n"
         "├─ Reserved by:\tjack@example.com (acme)\n"
-        "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
+        "├─ Reserved on:\tThu Jan 14 18:35:17 2021 +0000\n"
+        "└─ Updated on:\tThu Jan 14 18:35:17 2021 +0000\n"
     )
     assert not show_cve_record.called
 
@@ -79,7 +80,8 @@ def test_cve_show_full(show_cve_record, show_cve_id):
         "├─ State:\tRESERVED\n"
         "├─ Owning CNA:\tacme\n"
         "├─ Reserved by:\tjack@example.com (acme)\n"
-        "└─ Reserved on:\tThu Jan 14 18:35:17 2021\n"
+        "├─ Reserved on:\tThu Jan 14 18:35:17 2021 +0000\n"
+        "└─ Updated on:\tThu Jan 14 18:35:17 2021 +0000\n"
     )
     # Don't bother checking the data since we provide it as a fixture anyway. Simply check that a
     # JSON is displayed and the length of the printed string is something reasonable.
@@ -133,16 +135,19 @@ def test_cve_list():
         assert result.exit_code == 0, result.output
         assert result.output == (
             "CVE ID          STATE       OWNING CNA   RESERVED BY   RESERVED ON\n"
-            "CVE-2021-3001   RESERVED    acme         bob (acme)    Thu Jan 14 18:32:19 2021\n"
-            "CVE-2021-3002   PUBLISHED   acme         ann (acme)    Thu Jan 14 18:32:57 2021\n"
-            "CVE-2021-3003   REJECTED    acme         eve (corp)    Thu Jan 14 18:34:50 2021\n"
+            "CVE-2021-3001   RESERVED    acme         bob (acme)    "
+            "Thu Jan 14 18:32:19 2021 +0000\n"
+            "CVE-2021-3002   PUBLISHED   acme         ann (acme)    "
+            "Thu Jan 14 18:32:57 2021 +0000\n"
+            "CVE-2021-3003   REJECTED    acme         eve (corp)    "
+            "Thu Jan 14 18:34:50 2021 +0000\n"
         )
         result = runner.invoke(cli, DEFAULT_OPTS + ["list", "--no-header"])
         assert result.exit_code == 0, result.output
         assert result.output == (
-            "CVE-2021-3001   RESERVED    acme   bob (acme)   Thu Jan 14 18:32:19 2021\n"
-            "CVE-2021-3002   PUBLISHED   acme   ann (acme)   Thu Jan 14 18:32:57 2021\n"
-            "CVE-2021-3003   REJECTED    acme   eve (corp)   Thu Jan 14 18:34:50 2021\n"
+            "CVE-2021-3001   RESERVED    acme   bob (acme)   Thu Jan 14 18:32:19 2021 +0000\n"
+            "CVE-2021-3002   PUBLISHED   acme   ann (acme)   Thu Jan 14 18:32:57 2021 +0000\n"
+            "CVE-2021-3003   REJECTED    acme   eve (corp)   Thu Jan 14 18:34:50 2021 +0000\n"
         )
 
 
@@ -184,7 +189,8 @@ class TestCvePublish:
             "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
             "assignerShortName": "test_org",
             "cveId": cve_id,
-            "datePublished": "2001-05-02T00:00:00Z",
+            "datePublished": "2022-05-02T00:00:00Z",
+            "dateUpdated": "2021-06-29T12:33:52.892Z",
             "dateReserved": "2021-06-29T12:33:52.892Z",
             "requesterUserId": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
             "state": "PUBLISHED",
@@ -212,7 +218,8 @@ class TestCvePublish:
             f"{self.cve_id}\n"
             "├─ State:\tPUBLISHED\n"
             "├─ Owning CNA:\ttest_org\n"
-            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+            "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
         )
         assert not update_published.called
 
@@ -239,7 +246,8 @@ class TestCvePublish:
             f"{self.cve_id}\n"
             "├─ State:\tPUBLISHED\n"
             "├─ Owning CNA:\ttest_org\n"
-            "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+            "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
         )
         assert not update_published.called
 
@@ -268,7 +276,8 @@ def test_cve_reject_with_record(move_to_rejected, update_rejected, reject):
             "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
             "assignerShortName": "test_org",
             "cveId": cve_id,
-            "dateRejected": "2001-05-02T00:00:00Z",
+            "dateRejected": "2022-05-02T00:00:00Z",
+            "dateUpdated": "2022-05-02T00:00:00Z",
             "dateReserved": "2021-06-29T12:33:52.892Z",
             "requesterUserId": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
             "state": "REJECTED",
@@ -289,7 +298,8 @@ def test_cve_reject_with_record(move_to_rejected, update_rejected, reject):
         f"{cve_id}\n"
         "├─ State:\tREJECTED\n"
         "├─ Owning CNA:\ttest_org\n"
-        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+        "└─ Updated on:\tMon May  2 00:00:00 2022 +0000\n"
     )
     assert not update_rejected.called
     assert not move_to_rejected.called
@@ -324,7 +334,8 @@ def test_cve_reject_without_record(move_to_rejected, update_rejected, reject):
         "├─ State:\tREJECTED\n"
         "├─ Owning CNA:\tacme\n"
         "├─ Reserved by:\tjack@example.com (acme)\n"
-        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+        "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
     )
     assert not update_rejected.called
     assert not reject.called
@@ -357,7 +368,8 @@ def test_cve_undo_reject(move_to_reserved):
         "├─ State:\tRESERVED\n"
         "├─ Owning CNA:\tacme\n"
         "├─ Reserved by:\tjack@example.com (acme)\n"
-        "└─ Reserved on:\tTue Jun 29 12:33:52 2021\n"
+        "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+        "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
     )
 
 
@@ -412,12 +424,12 @@ def test_reserve():
             "├─ State:\tRESERVED\n"
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved by:\ttest_user@test_org.com (test_org)\n"
-            "└─ Reserved on:\tMon May 24 18:14:34 2021\n"
+            "└─ Reserved on:\tMon May 24 18:14:34 2021 +0000\n"
             "CVE-2021-20002\n"
             "├─ State:\tRESERVED\n"
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved by:\ttest_user@test_org.com (test_org)\n"
-            "└─ Reserved on:\tMon May 24 18:14:34 2021\n"
+            "└─ Reserved on:\tMon May 24 18:14:34 2021 +0000\n"
             "\n"
             "Remaining quota: 10\n"
         )
@@ -445,8 +457,8 @@ def test_active_user_show():
             "Test User — test@user\n"
             "├─ Active:\tYes\n"
             "├─ Roles:\tADMIN\n"
-            "├─ Created:\tThu Apr 22 02:09:08 2021\n"
-            "└─ Modified:\tThu Apr 22 02:09:08 2021\n"
+            "├─ Created:\tThu Apr 22 02:09:08 2021 +0000\n"
+            "└─ Modified:\tThu Apr 22 02:09:08 2021 +0000\n"
         )
 
 
@@ -472,8 +484,8 @@ def test_inactive_user_show():
             "test@user\n"
             "├─ Active:\tNo\n"
             "├─ Roles:\tNone\n"
-            "├─ Created:\tThu Apr 22 02:09:08 2021\n"
-            "└─ Modified:\tThu Apr 22 02:09:08 2021\n"
+            "├─ Created:\tThu Apr 22 02:09:08 2021 +0000\n"
+            "└─ Modified:\tThu Apr 22 02:09:08 2021 +0000\n"
         )
 
 
@@ -518,11 +530,12 @@ def test_user_list():
         result = runner.invoke(cli, DEFAULT_OPTS + ["org", "users"])
         assert result.exit_code == 0, result.output
         assert result.output == (
-            "USERNAME      NAME          ROLES   ACTIVE   CREATED                    MODIFIED\n"
-            "foo           Foo           None    No       Wed May 26 19:27:24 2021   "
-            "Wed May 26 19:32:57 2021\n"
-            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021   "
-            "Wed May 26 19:28:52 2021\n"
+            "USERNAME      NAME          ROLES   ACTIVE   CREATED                          "
+            "MODIFIED\n"
+            "foo           Foo           None    No       Wed May 26 19:27:24 2021 +0000   "
+            "Wed May 26 19:32:57 2021 +0000\n"
+            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021 +0000   "
+            "Wed May 26 19:28:52 2021 +0000\n"
         )
 
 
@@ -543,6 +556,6 @@ def test_show_org():
         assert result.output == (
             "Test Org — test_org\n"
             "├─ Roles:\tCNA\n"
-            "├─ Created:\tWed Apr 21 02:09:07 2021\n"
-            "└─ Modified:\tWed Apr 21 02:09:07 2021\n"
+            "├─ Created:\tWed Apr 21 02:09:07 2021 +0000\n"
+            "└─ Modified:\tWed Apr 21 02:09:07 2021 +0000\n"
         )

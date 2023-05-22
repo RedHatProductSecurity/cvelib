@@ -74,16 +74,22 @@ def print_cve_id(cve: dict) -> None:
     if "requested_by" in cve:
         click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
         click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
-        click.echo(f"└─ Reserved on:\t{human_ts(cve['reserved'])}")
+        if "time" in cve:
+            click.echo(f"├─ Reserved on:\t{human_ts(cve['reserved'])}")
+            click.echo(f"└─ Updated on:\t{human_ts(cve['time']['modified'])}")
+        else:
+            click.echo(f"└─ Reserved on:\t{human_ts(cve['reserved'])}")
     else:
-        click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
+        click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
+        click.echo(f"└─ Updated on:\t{human_ts(cve['dateUpdated'])}")
 
 
 def print_cve_record(cve: dict) -> None:
     click.secho(cve["cveMetadata"]["cveId"], bold=True)
     click.echo(f"├─ State:\t{cve['cveMetadata']['state']}")
     click.echo(f"├─ Owning CNA:\t{cve['cveMetadata']['assignerShortName']}")
-    click.echo(f"└─ Reserved on:\t{human_ts(cve['cveMetadata']['dateReserved'])}")
+    click.echo(f"├─ Reserved on:\t{human_ts(cve['cveMetadata'].get('dateReserved', 'N/A'))}")
+    click.echo(f"└─ Updated on:\t{human_ts(cve['cveMetadata'].get('dateUpdated', 'N/A'))}")
 
 
 def print_table(lines: Sequence[Sequence[str]], highlight_header: bool = True) -> None:
