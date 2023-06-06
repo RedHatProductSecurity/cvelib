@@ -37,6 +37,46 @@ def test_cve_id_show(show_cve_record, show_cve_id):
 
 @mock.patch("cvelib.cli.CveApi.show_cve_id")
 @mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_reserved_not_owned_cve_id(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
+        "cve_id": "CVE-2099-0000",
+        "cve_year": "2099",
+        "owning_cna": "[REDACTED]",
+        "state": "RESERVED",
+    }
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-0000"])
+    assert result.exit_code == 0, result.output
+    assert result.output == "CVE-2099-0000\n├─ State:\tRESERVED\n└─ Owning CNA:\t[REDACTED]\n"
+    assert not show_cve_record.called
+
+
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_published_not_owned_cve_id(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
+        "cve_id": "CVE-2099-0000",
+        "cve_year": "2099",
+        "owning_cna": "acme",
+        "dateUpdated": "2000-02-08T17:22:07.669Z",
+        "state": "PUBLISHED",
+    }
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-0000"])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "CVE-2099-0000\n"
+        "├─ State:\tPUBLISHED\n"
+        "├─ Owning CNA:\tacme\n"
+        "└─ Updated on:\tTue Feb  8 17:22:07 2000 +0000\n"
+    )
+    assert not show_cve_record.called
+
+
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
 def test_cve_show_full(show_cve_record, show_cve_id):
     show_cve_id.return_value = {
         "cve_id": "CVE-2099-1000",

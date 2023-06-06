@@ -80,8 +80,11 @@ def print_cve_id(cve: dict) -> None:
         else:
             click.echo(f"└─ Reserved on:\t{human_ts(cve['reserved'])}")
     else:
-        click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
-        click.echo(f"└─ Updated on:\t{human_ts(cve['dateUpdated'])}")
+        if "dateUpdated" in cve:
+            click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
+            click.echo(f"└─ Updated on:\t{human_ts(cve['dateUpdated'])}")
+        else:
+            click.echo(f"└─ Owning CNA:\t{cve['owning_cna']}")
 
 
 def print_cve_record(cve: dict) -> None:
