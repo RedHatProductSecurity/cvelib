@@ -210,7 +210,25 @@ class Config:
         )
 
 
-@click.group(context_settings=CONTEXT_SETTINGS)
+class SkipRequiredOnHelp(click.Group):
+    def parse_args(self, ctx: click.Context, args: list) -> list:
+        """If any help options are used, mark global required options as not required.
+
+        That way, we can skip directly to showing the help without requiring users to specify
+        values that don't end up getting used anyway.
+        """
+        if any(arg in ctx.help_option_names for arg in args):
+            # Iterate over all options and flip them to not required and not to prompt for input.
+            for param in self.params:
+                if isinstance(param, click.Option):
+                    param.required = False
+                    # Type ignored due to `"Option" has no attribute "prompt_required"` error:
+                    # https://github.com/pallets/click/blob/d0af32d8/src/click/core.py#L2455
+                    param.prompt_required = False  # type: ignore
+        return super(SkipRequiredOnHelp, self).parse_args(ctx, args)
+
+
+@click.group(context_settings=CONTEXT_SETTINGS, cls=SkipRequiredOnHelp)
 @click.option(
     "-u", "--username", envvar="CVE_USER", required=True, help="Your username (env var: CVE_USER)"
 )
