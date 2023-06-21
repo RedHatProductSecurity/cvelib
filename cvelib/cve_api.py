@@ -148,22 +148,9 @@ class CveApi:
             return cve_json["containers"]["cna"]
         return cve_json
 
-    def _add_provider_metadata(self, cve_json: dict) -> dict:
-        """Add the providerMetadata objects to a CNA container if one is not present.
-
-        The orgId is the only required element of the providerMetadata object, and we can fetch
-        it from the API using the org short name provided by the user (when this class is
-        instantiated.)
-        """
-        if "providerMetadata" not in cve_json:
-            org_id = self.show_org()["UUID"]
-            cve_json["providerMetadata"] = {"orgId": org_id}
-        return cve_json
-
     def publish(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
-        cve_json = self._add_provider_metadata(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
 
@@ -175,7 +162,6 @@ class CveApi:
     def update_published(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Update a published CVE record from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
-        cve_json = self._add_provider_metadata(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
 
@@ -187,7 +173,6 @@ class CveApi:
     def reject(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Reject a CVE from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
-        cve_json = self._add_provider_metadata(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
 
@@ -199,7 +184,6 @@ class CveApi:
     def update_rejected(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Update a rejected CVE record from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
-        cve_json = self._add_provider_metadata(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
 
