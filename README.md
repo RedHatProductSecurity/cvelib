@@ -117,6 +117,34 @@ Additional options that have an accompanying environment variable include:
   before a request is sent to CVE Services. Truthy values for the environment variable are:
   `1`, `t`, `yes`.
 
+### Command Autocompletion
+
+Autocompletion of subcommands is supported for the following shells:
+
+#### Bash
+
+Add the following line to your `~/.bashrc` file:
+
+```bash
+eval "$(_CVE_COMPLETE=bash_source cve)"
+```
+
+#### ZSH
+
+Add the following line to your `~/.zshrc` file:
+
+```bash
+eval "$(_CVE_COMPLETE=zsh_source cve)"
+```
+
+#### Fish
+
+Add the following line to a `~/.config/fish/completions/cve.fish` file:
+
+```bash
+eval (env _CVE_COMPLETE=fish_source cve)
+```
+
 ## CLI Usage Examples
 
 Available options and commands can be displayed by running `cve --help`. The following are
@@ -218,6 +246,13 @@ pip install -e .
 pip install tox
 # If you want to use any of the dev dependencies outside of Tox, you can install them all with:
 pip install -e .[dev]
+```
+
+To enable command autocompletion when using a virtual environment, add the line noted in `Command Autocompletion`
+above to your `venv/bin/activate` file, for example:
+
+```bash
+echo 'eval "$(_CVE_COMPLETE=bash_source cve)"' >> venv/bin/activate
 ```
 
 This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire
