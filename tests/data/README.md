@@ -4,3 +4,11 @@ The example CVE records (`CVEv5_*.json`) in this directory are copied verbatim f
 https://github.com/CVEProject/cve-schema/tree/v5.0.0/schema/v5.0/docs
 
 They should be kept up to date with the schema versions in `cvelib/schemas/`.
+
+The `container-*` files are standalone CNA or ADP (the two differ only in the set of required attributes) containers
+that were extracted from their respective full CVE record files:
+
+```shell
+jq .containers.cna CVEv5_advanced-example.json > container-advanced-example.json
+jq .containers.cna CVEv5_basic-example.json > container-basic-example.json
+```

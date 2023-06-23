@@ -245,7 +245,7 @@ class TestCvePublish:
         cna_text = json.dumps(self.cna_dict)
         response_dict = {
             "created": self.cve_response_data,
-            "message": f"{self.cve_id} record was " f"successfully created.",
+            "message": f"{self.cve_id} record was successfully created.",
         }
         publish.return_value = response_dict
 
@@ -260,6 +260,7 @@ class TestCvePublish:
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
             "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            f"\nAPI response: {self.cve_id} record was successfully created.\n"
         )
         assert not update_published.called
 
@@ -288,6 +289,7 @@ class TestCvePublish:
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
             "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            f"\nAPI response: {self.cve_id} record was successfully created.\n"
         )
         assert not update_published.called
 
@@ -340,6 +342,7 @@ def test_cve_reject_with_record(move_to_rejected, update_rejected, reject):
         "├─ Owning CNA:\ttest_org\n"
         "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
         "└─ Updated on:\tMon May  2 00:00:00 2022 +0000\n"
+        f"\nAPI response: {cve_id} record was successfully created.\n"
     )
     assert not update_rejected.called
     assert not move_to_rejected.called
