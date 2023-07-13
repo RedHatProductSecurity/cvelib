@@ -139,13 +139,31 @@ class CveApi:
 
     @staticmethod
     def _extract_cna_container(cve_json: dict) -> dict:
-        """Check if we received a full v5 record and extract just the CNA container part from it.
+        """Check if we are processing a full v5 record and extract just the CNA container from it.
 
         A record "looks" like a full one if it has a dataType=CVE_RECORD attribute. Otherwise,
-        it is assumed to be the CNA container.
+        it is assumed to be a CNA container already so return it as is.
         """
         if cve_json.get("dataType", "") == "CVE_RECORD":
             return cve_json["containers"]["cna"]
+        return cve_json
+
+    @staticmethod
+    def _extract_adp_container(cve_json: dict) -> dict:
+        """Check if we are processing a full v5 record and extract just the ADP container it.
+
+        A record "looks" like a full one if it has a dataType=CVE_RECORD attribute. Otherwise,
+        it is assumed to be an ADP container already so return it as is.
+
+        If multiple ADP containers are present in the record, return an error since we don't know
+        which ADP container is the one that we want to use.
+        """
+        if cve_json.get("dataType", "") == "CVE_RECORD":
+            if len(cve_json["containers"]["adp"]) > 1:
+                raise RuntimeError(
+                    "Cannot extract ADP container if multiple are present in CVE record"
+                )
+            return cve_json["containers"]["adp"][0]
         return cve_json
 
     def _add_provider_metadata(self, cve_json: dict) -> dict:
@@ -181,6 +199,18 @@ class CveApi:
 
         cve_json = {"cnaContainer": cve_json}
         response = self._put(f"cve/{cve_id}/cna", json=cve_json)
+        response.raise_for_status()
+        return response.json()
+
+    def publish_adp(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
+        """Add or update an ADP container from a JSON object representing the ADP container data."""
+        cve_json = self._extract_adp_container(cve_json)
+        cve_json = self._add_provider_metadata(cve_json)
+        if validate:
+            CveRecord.validate(cve_json, CveRecord.Schemas.ADP)
+
+        cve_json = {"adpContainer": cve_json}
+        response = self._put(f"cve/{cve_id}/adp", json=cve_json)
         response.raise_for_status()
         return response.json()
 

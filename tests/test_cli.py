@@ -129,6 +129,81 @@ def test_cve_show_full(show_cve_record, show_cve_id):
     assert len(printed_cve_record) > 100
 
 
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_cve_show_adp(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
+        "cve_id": "CVE-2099-1000",
+        "cve_year": "2099",
+        "owning_cna": "acme",
+        "requested_by": {"cna": "acme", "user": "jack@example.com"},
+        "reserved": "2021-01-14T18:35:17.928Z",
+        "state": "PUBLISHED",
+        "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.929Z"},
+    }
+    show_cve_record.return_value = {
+        "containers": {
+            "cna": {
+                "providerMetadata": {
+                    "dateUpdated": "2022-09-27T15:29:12.964Z",
+                    "orgId": "65fe0718-9a55-4e29-8e61-d4ddf6d83e28",
+                    "shortName": "acme",
+                },
+                "references": [{"url": "https://example.com"}],
+            },
+            "adp": [
+                {
+                    "providerMetadata": {
+                        "dateUpdated": "2022-09-27T15:29:12.964Z",
+                        "orgId": "12345678-9a55-4e29-8e61-d4ddf6d83e28",
+                        "shortName": "alice-corp",
+                    },
+                    "references": [{"url": "https://example.com/alice"}],
+                },
+                {
+                    "providerMetadata": {
+                        "dateUpdated": "2022-09-27T15:29:12.964Z",
+                        "orgId": "87654321-9a55-4e29-8e61-d4ddf6d83e28",
+                        "shortName": "bob-corp",
+                    },
+                    "references": [{"url": "https://example.com/bob"}],
+                },
+            ],
+        },
+        "cveMetadata": {
+            "assignerOrgId": "65fe0718-9a55-4e29-8e61-d4ddf6d83e28",
+            "assignerShortName": "acme",
+            "cveId": "CVE-2099-1000",
+            "dateRejected": "2022-09-27T15:26:42.117Z",
+            "dateReserved": "2021-01-14T18:35:17.469Z",
+            "dateUpdated": "2022-09-27T15:29:12.964Z",
+            "state": "PUBLISHED",
+        },
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.0",
+    }
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000", "--show-adp"])
+    assert result.exit_code == 0, result.output
+    _, _, printed_cve_record = result.output.partition("-----")
+    # Don't bother checking the data since we provide it as a fixture anyway. Simply check that both
+    # ADP containers are present.
+    assert "alice-corp ADP data:" in printed_cve_record
+    assert "bob-corp ADP data:" in printed_cve_record
+
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000", "--show-adp", "bob-corp"])
+    assert result.exit_code == 0, result.output
+    _, _, printed_cve_record = result.output.partition("-----")
+    assert "alice-corp ADP data:" not in printed_cve_record
+    assert "bob-corp ADP data:" in printed_cve_record
+
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000", "--show-adp", "random"])
+    assert result.exit_code == 0, result.output
+    _, _, printed_cve_record = result.output.partition("-----")
+    assert printed_cve_record.strip() == "CVE record does not contain ADP data from org(s): random."
+
+
 def test_cve_list():
     cves = [
         {
@@ -245,7 +320,7 @@ class TestCvePublish:
         cna_text = json.dumps(self.cna_dict)
         response_dict = {
             "created": self.cve_response_data,
-            "message": f"{self.cve_id} record was " f"successfully created.",
+            "message": f"{self.cve_id} record was successfully created.",
         }
         publish.return_value = response_dict
 
@@ -260,6 +335,7 @@ class TestCvePublish:
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
             "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            f"\nAPI response: {self.cve_id} record was successfully created.\n"
         )
         assert not update_published.called
 
@@ -288,8 +364,46 @@ class TestCvePublish:
             "├─ Owning CNA:\ttest_org\n"
             "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
             "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
+            f"\nAPI response: {self.cve_id} record was successfully created.\n"
         )
         assert not update_published.called
+
+
+@mock.patch("cvelib.cli.CveApi.publish_adp")
+def test_adp_publish(publish_adp):
+    adp_text = json.dumps({"references": [{"url": "https://example.com/hello"}]})
+    response_dict = {
+        "updated": {
+            "cveMetadata": {
+                "assignerOrgId": "uuid",
+                "assignerShortName": "test_org",
+                "cveId": "CVE-2001-0635",
+                "datePublished": "2022-05-02T00:00:00Z",
+                "dateUpdated": "2021-06-29T12:33:52.892Z",
+                "dateReserved": "2021-06-29T12:33:52.892Z",
+                "state": "PUBLISHED",
+            }
+        },
+        # Omit the rest of the API response message since it may change in the future.
+        "message": "CVE-2001-0635 record had a replacement ADP container...",
+    }
+    publish_adp.return_value = response_dict
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, DEFAULT_OPTS + ["publish-adp", "CVE-2001-0635", "--adp-json", adp_text]
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Published an ADP container for:\n"
+        "\n"
+        "CVE-2001-0635\n"
+        "├─ State:\tPUBLISHED\n"
+        "├─ Owning CNA:\ttest_org\n"
+        "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
+        "└─ Updated on:\tTue Jun 29 12:33:52 2021 +0000\n"
+        "\nAPI response: CVE-2001-0635 record had a replacement ADP container...\n"
+    )
 
 
 @mock.patch("cvelib.cli.CveApi.reject")
@@ -340,6 +454,7 @@ def test_cve_reject_with_record(move_to_rejected, update_rejected, reject):
         "├─ Owning CNA:\ttest_org\n"
         "├─ Reserved on:\tTue Jun 29 12:33:52 2021 +0000\n"
         "└─ Updated on:\tMon May  2 00:00:00 2022 +0000\n"
+        f"\nAPI response: {cve_id} record was successfully created.\n"
     )
     assert not update_rejected.called
     assert not move_to_rejected.called
