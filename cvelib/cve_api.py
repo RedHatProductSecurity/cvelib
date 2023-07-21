@@ -72,9 +72,9 @@ class CveApi:
     USER_ROLES = ("ADMIN",)
 
     class States(Constants):
-        RESERVED = "reserved"
-        PUBLISHED = "published"
-        REJECTED = "rejected"
+        RESERVED = "RESERVED"
+        PUBLISHED = "PUBLISHED"
+        REJECTED = "REJECTED"
 
     class Errors(Constants):
         RECORD_EXISTS = "CVE_RECORD_EXISTS"
