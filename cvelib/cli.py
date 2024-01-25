@@ -160,12 +160,13 @@ def handle_cve_api_error(func: Callable) -> Callable:
             return func(*args, **kwargs)
         except requests.exceptions.RequestException as exc:
             error = str(exc)
-            details = None
-            if getattr(exc, "response", None) is not None:
+            details = ""
+            response = getattr(exc, "response", None)
+            if response is not None:
                 try:
-                    details = exc.response.json()
+                    details = str(response.json())
                 except ValueError:
-                    details = exc.response.content
+                    details = response.content.decode("utf-8")
             print_error(error, details)
         except CveRecordValidationError as exc:
             click.secho("ERROR: ", bold=True, nl=False)
