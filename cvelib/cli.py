@@ -178,7 +178,7 @@ def handle_cve_api_error(func: Callable) -> Callable:
     return wrapped
 
 
-def print_error(msg: str, details: Optional[str]) -> None:
+def print_error(msg: str, details: str) -> None:
     click.secho("ERROR: ", bold=True, nl=False)
     click.echo(msg)
     if details:
