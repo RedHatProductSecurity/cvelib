@@ -73,7 +73,10 @@ def print_cve_id(cve: dict) -> None:
     # CVEs reserved by other CNAs do not include information on who requested them and when.
     if "requested_by" in cve:
         click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
-        click.echo(f"├─ Reserved by:\t{cve['requested_by']['user']} ({cve['requested_by']['cna']})")
+        click.echo(
+            "├─ Reserved by:\t"
+            f"{cve['requested_by'].get('user', 'n/a')} ({cve['requested_by']['cna']})"
+        )
         if "time" in cve:
             click.echo(f"├─ Reserved on:\t{human_ts(cve['reserved'])}")
             click.echo(f"└─ Updated on:\t{human_ts(cve['time']['modified'])}")
@@ -833,7 +836,7 @@ def list_cves(
     if sort_by:
         key = sort_by.lower()
         if key == "user":
-            cves.sort(key=lambda x: x["requested_by"]["user"])
+            cves.sort(key=lambda x: x["requested_by"].get("user", ""))
         elif key == "cve_id":
             cves.sort(key=lambda x: natural_cve_sort(x["cve_id"]))
         elif key == "reserved_ts":
@@ -851,7 +854,7 @@ def list_cves(
                 cve["cve_id"],
                 cve["state"],
                 cve["owning_cna"],
-                f"{cve['requested_by']['user']} ({cve['requested_by']['cna']})",
+                f"{cve['requested_by'].get('user') or 'n/a'} ({cve['requested_by']['cna']})",
                 human_ts(cve["reserved"]),
             )
         )
