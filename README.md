@@ -78,7 +78,7 @@ PS C:\> $Env:CVE_API_KEY="api_key"
 
 ### Podman/Docker
 
-To pass the configuration variables to the `cvelib` container, defined them in an `.env` file:
+To pass the configuration variables to the `cvelib` container, define them in an `.env` file:
 
 ```
 CVE_USER=margo
@@ -111,7 +111,7 @@ Additional options that have an accompanying environment variable include:
 * `--api-url` or `CVE_API_URL`: allows you to override the URL for the CVE Services API that would
   otherwise be determined by the deployment environment you selected. This is useful for local
   testing to point to a CVE Services API instance running on localhost (for example,
-  `export CVE_API_URL=http://localhost:3000/api/).
+  `export CVE_API_URL=http://localhost:3000/api/`).
 
 * `-i/--interactive` or `CVE_INTERACTIVE`: every create/update action will require confirmation
   before a request is sent to CVE Services. Truthy values for the environment variable are:
