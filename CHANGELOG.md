@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.3.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.2.1...1.3.0) (Jan 26, 2024)
+
+* Fixed displaying timestamps for older records (#66).
+* Added auto-completion of sub-commands (#73).
+* Added support for ADP containers (#70):
+  * A new `publish-adp` command is added that allows publishing of ADP containers into an existing CVE record (this is
+    only possible if a CVE is in the published state).
+  * The `show` subcommand now allows displaying a CNA container or all/subset of existing ADP containers (identified by
+    the org's name that created it).
+  * ADP containers can only be published and updated, so there is no functionality to remove them.
+* CVE state constants were updated to match the case used by CVE Services, e.g. `rejected` -> `REJECTED` (#75).
+* Fixed displaying CVE ID reservations for records that are missing the `user` attribute (#76).
+
 ## [1.2.1](https://github.com/RedHatProductSecurity/cvelib/compare/1.2.0...1.2.1) (Feb 16, 2023)
 
 * Improved `CveRecordValidationError` exception error message.
