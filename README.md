@@ -2,7 +2,7 @@
 
 A library and a command line interface for the CVE Services API.
 
-**Note**: version 1.0.0 of cvelib is compatible with CVE Services 2.1.
+**Note**: version 1.3.0 of cvelib is compatible with CVE Services 2.2.0.
 
 ## Requirements
 
@@ -255,27 +255,23 @@ above to your `venv/bin/activate` file, for example:
 echo 'eval "$(_CVE_COMPLETE=bash_source cve)"' >> venv/bin/activate
 ```
 
-This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire
-code base after you make any changes, run:
+This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire code base after you make any changes, run:
 
 ```bash
-# Reformat code base with Black
-pip install black
 black .
 ```
 
-To sort all imports using [isort](https://pycqa.github.io/isort/), run:
+To sort all imports using [ruff](https://docs.astral.sh/ruff/) (which replicates the behavior of
+[isort](https://pycqa.github.io/isort/), run:
 
 ```bash
-# Sort all imports
-pip install isort
-isort .
+ruff check --select I --fix .
 ```
 
-Running tests and linters (`flake8`, `mypy`, and `isort`/`black` formatting checks):
+Running tests and linters:
 
 ```bash
-# Run all tests and format check (also run as a Github action)
+# Run all tests and format/lint checks (also run as a Github action)
 tox
 # Run format check only
 tox -e black
