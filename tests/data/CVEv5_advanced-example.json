@@ -1,6 +1,6 @@
 {
   "dataType": "CVE_RECORD",
-  "dataVersion": "5.0",
+  "dataVersion": "5.1",
   "cveMetadata": {
     "cveId": "CVE-1337-1234",
     "assignerOrgId": "b3476cb9-2e3d-41a6-98d0-0f47421a65b6",
@@ -130,6 +130,12 @@
               "value": "GENERAL"
             }
           ],
+	  "cvssV4_0":  {
+            "baseScore": 7.8,
+            "baseSeverity": "HIGH",
+            "vectorString": "CVSS:4.0/AV:N/AC:L/AT:N/PR:N/UI:N/VC:N/VI:N/VA:N/SC:H/SI:L/SA:L",
+            "version":"4.0"
+          },
           "cvssV3_1": {
             "version": "3.1",
             "attackVector": "NETWORK",

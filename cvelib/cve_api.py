@@ -32,10 +32,10 @@ class CveRecordValidationError(Exception):
 
 class CveRecord:
     class Schemas(Constants):
-        CNA_PUBLISHED = next(SCHEMA_DIR.glob("published_cna_container_*.json"))
-        CNA_REJECTED = next(SCHEMA_DIR.glob("rejected_cna_container_*.json"))
-        ADP = next(SCHEMA_DIR.glob("adp_container_*.json"))
-        V5_SCHEMA = next(SCHEMA_DIR.glob("CVE_JSON_5.0_bundled_*.json"))
+        CNA_PUBLISHED = next(SCHEMA_DIR.glob("CVE_JSON_cnaPublishedContainer_*.json"))
+        CNA_REJECTED = next(SCHEMA_DIR.glob("CVE_JSON_cnaRejectedContainer_*.json"))
+        ADP = next(SCHEMA_DIR.glob("CVE_JSON_adpContainer_*.json"))
+        V5_SCHEMA = next(SCHEMA_DIR.glob("CVE_JSON_bundled_*.json"))
 
     @classmethod
     def validate(cls, cve_json: dict, schema_path: Optional[str] = None) -> None:

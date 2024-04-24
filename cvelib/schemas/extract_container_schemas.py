@@ -8,7 +8,7 @@ SCHEMAS_DIR = Path(__file__).parent
 
 def load_full_schema():
     try:
-        schema_file = next(SCHEMAS_DIR.glob("CVE_JSON_5.0_bundled_*.json"))
+        schema_file = next(SCHEMAS_DIR.glob("CVE_JSON_bundled_*.json"))
     except StopIteration:
         print("ERROR: No schema file found in the schemas directory!")
         sys.exit(1)
@@ -78,21 +78,19 @@ if __name__ == "__main__":
     # schema of a specific container is placed in the global context below.
     full_schema.pop("oneOf")
 
-    container_to_filename = {
-        "cnaRejectedContainer": "rejected_cna_container",
-        "cnaPublishedContainer": "published_cna_container",
-        "adpContainer": "adp_container",
-    }
-    for object_name, file_name in container_to_filename.items():
+    container_names = ("cnaRejectedContainer", "cnaPublishedContainer", "adpContainer")
+    for container_name in container_names:
         # Save the objects from which we'll create the subschema
-        container_object = full_schema["definitions"].pop(object_name)
+        container_object = full_schema["definitions"].pop(container_name)
 
         # Create a copy of the full schema
         object_schema = copy.deepcopy(full_schema)
 
         # Wipe out the other two objects (provide default of None for the object that we already
         # popped above).
-        for attr in container_to_filename.keys():
+        for attr in container_names:
             object_schema["definitions"].pop(attr, None)
 
-        create_sub_schema(object_schema, container_object, f"{file_name}_{schema_version}.json")
+        create_sub_schema(
+            object_schema, container_object, f"CVE_JSON_{container_name}_{schema_version}.json"
+        )
