@@ -3,6 +3,8 @@ line-length = 100
 
 [tool.ruff]
 line-length = 100
+
+[tool.ruff.lint]
 # https://beta.ruff.rs/docs/rules/
 select = ["F", "E", "W", "I", "N"]
 
