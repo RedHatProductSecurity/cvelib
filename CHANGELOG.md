@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.4.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.3.0...1.4.0) (May 15, 2024)
+
+* Updated CVE JSON schema to version 5.1.0, which makes it compatible with CVE Services 2.3.x (#79).
+
 ## [1.3.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.2.1...1.3.0) (Jan 26, 2024)
 
 * Fixed displaying timestamps for older records (#66).
