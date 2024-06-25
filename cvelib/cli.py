@@ -176,7 +176,9 @@ def handle_cve_api_error(func: Callable) -> Callable:
             click.echo("CVE record is not valid against the v5 JSON schema:")
             for error in exc.errors:
                 click.echo(f"  {error}")
-        click.echo("\nUse `cve <command> -h` for more information on how to use this command")
+        cmd_ctx = next((arg for arg in args if isinstance(arg, click.Context)), None)
+        cmd_name = cmd_ctx.command.name if cmd_ctx else "<command>"
+        click.echo(f"\nUse `cve {cmd_name} -h` for more information on how to use this command")
         sys.exit(1)
 
     return wrapped
