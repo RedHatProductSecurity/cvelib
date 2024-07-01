@@ -1,3 +1,4 @@
+import decimal
 import json
 import re
 import sys
@@ -351,9 +352,9 @@ def publish(
 
     try:
         if cve_json_str is not None:
-            cve_json = json.loads(cve_json_str)
+            cve_json = json.loads(cve_json_str, parse_float=decimal.Decimal)
         elif cve_json_file is not None:
-            cve_json = json.load(cve_json_file)
+            cve_json = json.load(cve_json_file, parse_float=decimal.Decimal)
         else:
             raise click.BadParameter(
                 "must provide CNA JSON data using one of: "
@@ -443,9 +444,9 @@ def publish_adp(
         )
     try:
         if adp_json_str is not None:
-            cve_json = json.loads(adp_json_str)
+            cve_json = json.loads(adp_json_str, parse_float=decimal.Decimal)
         elif adp_json_file is not None:
-            cve_json = json.load(adp_json_file)
+            cve_json = json.load(adp_json_file, parse_float=decimal.Decimal)
         else:
             raise click.BadParameter(
                 "must provide ADP JSON record using one of: "
@@ -534,9 +535,9 @@ def reject(
 
     try:
         if cve_json_str is not None:
-            cve_json = json.loads(cve_json_str)
+            cve_json = json.loads(cve_json_str, parse_float=decimal.Decimal)
         elif cve_json_file is not None:
-            cve_json = json.load(cve_json_file)
+            cve_json = json.load(cve_json_file, parse_float=decimal.Decimal)
         else:
             cve_json = None
     except json.JSONDecodeError as exc:
