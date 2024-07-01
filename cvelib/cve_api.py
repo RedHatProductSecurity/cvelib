@@ -51,7 +51,7 @@ class CveRecord:
             schema_path = cls.Schemas.CNA_PUBLISHED
 
         with open(schema_path) as schema_file:
-            schema = json.load(schema_file)
+            schema = json.load(schema_file, parse_float=decimal.Decimal)
 
         validator = Draft7Validator(schema)
         errors = sorted(validator.iter_errors(cve_json), key=lambda e: e.message)
