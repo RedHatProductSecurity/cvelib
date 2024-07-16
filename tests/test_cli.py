@@ -649,7 +649,7 @@ def test_reset_key():
     with mock.patch("cvelib.cli.CveApi.reset_api_key") as reset_api_key:
         reset_api_key.return_value = api_key
         runner = CliRunner()
-        result = runner.invoke(cli, DEFAULT_OPTS + ["user", "reset-key"])
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user", "reset-key", "-u", "test_user"])
         assert result.exit_code == 0, result.output
         assert result.output == (
             "New API key for test_user:\n\n"

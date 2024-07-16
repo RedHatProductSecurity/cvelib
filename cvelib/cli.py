@@ -895,7 +895,7 @@ def quota(ctx: click.Context, print_raw: bool) -> None:
     "-u",
     "--username",
     help="Specify the user to show.",
-    show_default="Current user specified in -u/--username/CVE_USER",
+    show_default="Current user specified in top-level -u/--username/$CVE_USER",
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
@@ -920,14 +920,16 @@ def show_user(ctx: click.Context, username: Optional[str], print_raw: bool) -> N
 @click.option(
     "-u",
     "--username",
+    required=True,
     help="User whose API key should be reset (only ADMIN role users can update other users).",
-    show_default="Current user specified in global -u/--username/CVE_USER",
 )
 @click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
 @click.pass_context
 @handle_cve_api_error
 def reset_key(ctx: click.Context, username: Optional[str], print_raw: bool) -> None:
     """Reset a user's personal access token (API key).
+
+    You must explicitly specify the user being updated using the `-u` option.
 
     This API key is used to authenticate each request to the CVE API.
     """
@@ -951,8 +953,8 @@ def reset_key(ctx: click.Context, username: Optional[str], print_raw: bool) -> N
 @click.option(
     "-u",
     "--username",
+    required=True,
     help="Username of the user being updated (only ADMIN role users can update other users).",
-    show_default="Current user specified in global -u/--username/CVE_USER",
 )
 @click.option(
     "--mark-active/--mark-inactive", "active", default=None, help="Mark user as active or inactive."
@@ -967,6 +969,8 @@ def reset_key(ctx: click.Context, username: Optional[str], print_raw: bool) -> N
 @handle_cve_api_error
 def update_user(ctx: click.Context, username: Optional[str], **opts_data: dict) -> None:
     """Update a user.
+
+    You must explicitly specify the user being updated using the `-u` option.
 
     To reset a user's API key, use `cve user reset-key`.
     """
