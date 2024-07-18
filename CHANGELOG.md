@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.5.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.4.0...1.5.0) (Jul 18, 2024)
+
+* The `-u/--username` option is now required when updating a user or resetting the token of a user (#86). 
+* Updated CVE record schemas to final 5.1.0 version; the previous 5.1.0 were still RC versions that later changed (#87).
+* The called command is shown in an error message that refers users to read help text (#84).
+
 ## [1.4.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.3.0...1.4.0) (May 15, 2024)
 
 * Updated CVE JSON schema to version 5.1.0, which makes it compatible with CVE Services 2.3.x (#79).
