@@ -220,14 +220,19 @@ class Config:
         )
 
 
-class SkipRequiredOnHelp(click.Group):
+class SkipRequiredIf(click.Group):
     def parse_args(self, ctx: click.Context, args: list) -> list:
-        """If any help options are used, mark global required options as not required.
+        """Mark global required options as not required in certain cases
 
-        That way, we can skip directly to showing the help without requiring users to specify
-        values that don't end up getting used anyway.
+        If any help options are used, we can skip directly to showing the help without requiring
+        users to specify authentication values.
+
+        If certain subcommands are used that don't require authentication (e.g. `ping`), do not
+        require authentication values.
         """
-        if any(arg in ctx.help_option_names for arg in args):
+        if any(arg in ctx.help_option_names for arg in args) or any(
+            arg in ("ping", "show") for arg in args
+        ):
             # Iterate over all options and flip them to not required and not to prompt for input.
             for param in self.params:
                 if isinstance(param, click.Option):
@@ -235,12 +240,18 @@ class SkipRequiredOnHelp(click.Group):
                     # Type ignored due to `"Option" has no attribute "prompt_required"` error:
                     # https://github.com/pallets/click/blob/d0af32d8/src/click/core.py#L2455
                     param.prompt_required = False  # type: ignore
-        return super(SkipRequiredOnHelp, self).parse_args(ctx, args)
+        return super(SkipRequiredIf, self).parse_args(ctx, args)
 
 
-@click.group(context_settings=CONTEXT_SETTINGS, cls=SkipRequiredOnHelp)
+@click.group(context_settings=CONTEXT_SETTINGS, cls=SkipRequiredIf)
 @click.option(
-    "-u", "--username", envvar="CVE_USER", required=True, help="Your username (env var: CVE_USER)"
+    "-u",
+    "--username",
+    envvar="CVE_USER",
+    required=True,
+    help="Your username (env var: CVE_USER)",
+    prompt="Username",
+    hide_input=False,
 )
 @click.option(
     "-o",
@@ -248,6 +259,8 @@ class SkipRequiredOnHelp(click.Group):
     envvar="CVE_ORG",
     required=True,
     help="Your CNA organization short name (env var: CVE_ORG)",
+    prompt="Organization",
+    hide_input=False,
 )
 @click.option(
     "-a",
