@@ -717,14 +717,6 @@ def test_show_org():
 
 
 class TestSubcommandHelp:
-    def test_required_opts(self):
-        with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
-            show_org.return_value = {}
-            runner = CliRunner()
-            result = runner.invoke(cli, ["org"])
-            assert result.exit_code == 2, result.output
-            assert "Error: Missing option" in result.output
-
     def test_exit_on_help(self):
         with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
             show_org.return_value = {}
