@@ -206,8 +206,8 @@ See `-h/--help` of any command for a complete list of sub-commands and options.
 
 ## Library Usage Example
 
-`cvelib` also exposes a Python interface to CVE Service that can be used within any Python application that includes
-`cvelib` as its dependency. Here is an example Python function that fetches the CVE record for a given CVE ID:
+`cvelib` also exposes a Python interface to CVE Services that can be used within any Python application that includes
+`cvelib` as its dependency. The following is an example Python function that fetches a CVE record for a given CVE ID:
 
 ```python
 import os
