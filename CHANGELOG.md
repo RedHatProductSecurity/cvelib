@@ -1,8 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.5.0...1.6.0) (Oct 11, 2024)
+
+* Subcommands that not require authentication credentials no longer require `-u/-o/-a` options to be set (#93).
+
 ## [1.5.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.4.0...1.5.0) (Jul 18, 2024)
 
-* The `-u/--username` option is now required when updating a user or resetting the token of a user (#86). 
+* The `-u/--username` option is now required when updating a user or resetting the token of a user (#86).
 * Updated CVE record schemas to final 5.1.0 version; the previous 5.1.0 were still RC versions that later changed (#87).
 * The called command is shown in an error message that refers users to read help text (#84).
 
@@ -29,7 +33,7 @@
 
 ## [1.2.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.1.0...1.2.0) (Dec 2, 2022)
 
-* The `list` and `users` commands have a new `-N/--no-header` option that skips printing a header in the table 
+* The `list` and `users` commands have a new `-N/--no-header` option that skips printing a header in the table
   output. (#55).
 * The bundled CNA Published JSON schema is used by default when calling `CveRecord.validate()` (#57).
 * The `jsonschema` required dependency was relaxed to an older version (#54).
