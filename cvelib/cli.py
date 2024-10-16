@@ -350,8 +350,7 @@ def publish(
 
     For information on the required properties in a given CNA container of a CVE record,
     see the schema in:\n
-    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
-    https://cveproject.github.io/cve-schema/schema/v5.0/docs/#oneOf_i0_containers_cna
+    https://cveproject.github.io/cve-schema/schema/docs/
 
     Because the CVE Services API only expects the CNA container contents of the full CVE v5 record,
     the data you pass to this command can specify just the attributes defined by the
@@ -443,8 +442,7 @@ def publish_adp(
 
     For information on the required properties in a given ADP container of a CVE record,
     see the schema in:\n
-    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
-    https://cveproject.github.io/cve-schema/schema/v5.0/docs/#oneOf_i0_containers_adp
+    https://cveproject.github.io/cve-schema/schema/docs/
 
     Because the CVE Services API only expects the ADP container contents of the full CVE v5 record,
     the data you pass to this command can specify just the attributes defined by the adpContainer
@@ -535,7 +533,7 @@ def reject(
       cve reject CVE-2022-1234 -f v5_reject_record.json
 
     For information on the required properties in a given CVE JSON record, see the schema in:\n
-    https://github.com/CVEProject/cve-schema/blob/master/schema/v5.0/CVE_JSON_5.0_schema.json
+    https://cveproject.github.io/cve-schema/schema/docs/
 
     Because the CVE Services API only expects the cnaRejectedContainer contents of the full record,
     the record you pass to this command can specify just that data, and not the full record.
