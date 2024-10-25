@@ -1,4 +1,6 @@
 import json
+import re
+from pathlib import Path
 from unittest import mock
 
 from click.testing import CliRunner
@@ -714,6 +716,23 @@ def test_show_org():
             "├─ Created:\tWed Apr 21 02:09:07 2021 +0000\n"
             "└─ Modified:\tWed Apr 21 02:09:07 2021 +0000\n"
         )
+
+
+def test_validate_good():
+    runner = CliRunner()
+    example_cve_file = str(Path(__file__).parent / "data/CVEv5_basic-example.json")
+    result = runner.invoke(
+        cli, ["validate", "--cve-json-file", example_cve_file, "--schema-type", "full"]
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == "CVE record is valid!\n"
+
+
+def test_validate_bad():
+    runner = CliRunner()
+    result = runner.invoke(cli, ["validate", "--cve-json", '{"bad": "record"}'])
+    assert result.exit_code == 1
+    assert re.search("^Schema validation .* failed:\n", result.output)
 
 
 def test_exit_on_help():

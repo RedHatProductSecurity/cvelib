@@ -10,7 +10,7 @@ import click
 import requests
 
 from . import __version__
-from .cve_api import CveApi, CveRecordValidationError
+from .cve_api import CveApi, CveRecord, CveRecordValidationError
 
 # Check CVE IDs to use valid years (first one assigned was in 1999; hopefully we'll transcend
 # software vulnerabilities in year 3000+), and disallow ID of 0000 and leading zeros for 4+ IDs
@@ -1137,6 +1137,71 @@ def users(ctx: click.Context, print_raw: bool, no_header: bool) -> None:
         # Add header after sorting
         lines.insert(0, ("USERNAME", "NAME", "ROLES", "ACTIVE", "CREATED", "MODIFIED"))
     print_table(lines, highlight_header=not no_header)
+
+
+@cli.command(
+    help=f"Validate a CVE record against the "
+    f"{CveRecord.Schemas.V5_SCHEMA.rsplit('_', maxsplit=1)[1].removesuffix('.json')} "
+    f"CVE JSON (sub)schema."
+)
+@click.option(
+    "-j",
+    "--cve-json",
+    "cve_json_str",
+    type=click.STRING,
+    help="JSON body of CVE record.",
+)
+@click.option(
+    "-f",
+    "--cve-json-file",
+    type=click.File(),
+    help="File containing JSON body of a CVE record.",
+)
+@click.option(
+    "-s",
+    "--schema-type",
+    default="cna-published",
+    show_default=True,
+    type=click.Choice(["full", "cna-published", "cna-rejected", "adp"], case_sensitive=False),
+    help="Specific type of schema to validate against",
+)
+def validate(
+    cve_json_str: Optional[str], cve_json_file: Optional[TextIO], schema_type: Optional[str]
+) -> None:
+    if cve_json_file is not None and cve_json_str is not None:
+        raise click.BadParameter(
+            "cannot use both `-f/--cve-json-file` and `-j/--cve-json` to provide a CVE JSON."
+        )
+
+    try:
+        if cve_json_str is not None:
+            cve_json = json.loads(cve_json_str)
+        elif cve_json_file is not None:
+            cve_json = json.load(cve_json_file)
+        else:
+            raise click.BadParameter(
+                "must provide CVE JSON data using one of: `-f/--cve-json-file` or `-j/--cve-json`."
+            )
+    except json.JSONDecodeError as exc:
+        print_error(msg="CVE data is not valid JSON", details=str(exc))
+        return
+
+    if schema_type == "full":
+        schema_path = CveRecord.Schemas.V5_SCHEMA
+    elif schema_type == "cna-published":
+        schema_path = CveRecord.Schemas.CNA_PUBLISHED
+    elif schema_type == "cna-rejected":
+        schema_path = CveRecord.Schemas.CNA_REJECTED
+    else:
+        schema_path = CveRecord.Schemas.ADP
+
+    try:
+        CveRecord.validate(cve_json, schema_path=schema_path)
+    except CveRecordValidationError as exc:
+        click.echo(exc)
+        sys.exit(1)
+    else:
+        click.echo("CVE record is valid!")
 
 
 @cli.command()
