@@ -371,8 +371,7 @@ def publish(
             cve_json = json.load(cve_json_file)
         else:
             raise click.BadParameter(
-                "must provide CNA JSON data using one of: "
-                "`-f/--cve-json-file` or `-j/--cve-json`."
+                "must provide CNA JSON data using one of: `-f/--cve-json-file` or `-j/--cve-json`."
             )
     except json.JSONDecodeError as exc:
         print_error(msg="CNA data is not valid JSON", details=str(exc))
@@ -735,7 +734,7 @@ def show_cve(
     print_raw: bool,
     cve_id: str,
 ) -> None:
-    """Display a specific CVE ID (and optionally its record) owned by your CNA."""
+    """Display a specific CVE ID (and optionally its record)."""
     if [show_record, show_cna, bool(show_adp)].count(True) > 1:
         raise click.BadParameter(
             "use one of: `-r/--show-record` OR `-c/--show-cna` OR `-a/--show-adp`."
