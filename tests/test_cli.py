@@ -716,12 +716,11 @@ def test_show_org():
         )
 
 
-class TestSubcommandHelp:
-    def test_exit_on_help(self):
-        with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
-            show_org.return_value = {}
-            runner = CliRunner()
-            result = runner.invoke(cli, ["org", "--help"])
-            assert result.exit_code == 0, result.output
-            # The command is named after the function that is called.
-            assert result.output.startswith("Usage: cli org")
+def test_exit_on_help():
+    with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
+        show_org.return_value = {}
+        runner = CliRunner()
+        result = runner.invoke(cli, ["org", "--help"])
+        assert result.exit_code == 0, result.output
+        # The command is named after the function that is called.
+        assert result.output.startswith("Usage: cli org")
