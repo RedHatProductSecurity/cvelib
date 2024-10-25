@@ -12,7 +12,10 @@ import requests
 from . import __version__
 from .cve_api import CveApi, CveRecordValidationError
 
-CVE_RE = re.compile(r"^CVE-[12]\d{3}-\d{4,}$")
+# Check CVE IDs to use valid years (first one assigned was in 1999; hopefully we'll transcend
+# software vulnerabilities in year 3000+), and disallow ID of 0000 and leading zeros for 4+ IDs
+# (e.g. -00001 is an invalid ID).
+CVE_RE = re.compile(r"CVE-(?:1999|2\d{3})-(?!0{4})(?:0\d{3}|[1-9]\d{3,})")
 CONTEXT_SETTINGS = {
     "help_option_names": ["-h", "--help"],
     "max_content_width": 100,
