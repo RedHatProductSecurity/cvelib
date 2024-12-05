@@ -2,7 +2,7 @@
 
 A library and a command line interface for the CVE Services API.
 
-**Note**: version 1.4.0 of cvelib is compatible with CVE Services 2.3.1 and CVE JSON schema 5.1.0.
+**Note**: version 1.7.0 of cvelib is compatible with CVE Services 2.5.0 and CVE JSON schema 5.1.1.
 
 ## Requirements
 
@@ -239,7 +239,7 @@ For more information, see the individual methods defined in the
 ```bash
 git clone https://github.com/RedHatProductSecurity/cvelib.git
 cd cvelib
-python3 -m venv venv  # Must be Python 3.6 or later
+python3 -m venv venv
 source venv/bin/activate
 pip install --upgrade pip
 pip install -e .
@@ -275,10 +275,10 @@ Running tests and linters:
 tox
 # Run format check only
 tox -e black
-# Run tests against Python 3.6 only
-tox -e py36
-# Run a single test against Python 3.6 only
-tox -e py36 -- tests/test_cli.py::test_cve_show
+# Run tests using a specific version of Python
+tox -e py313
+# Run a single test using a specific version of Python
+tox -e py313 -- tests/test_cli.py::test_cve_show
 ```
 
 Any changes in the commands, their options, or help texts must be reflected in the generated man pages. To refresh
