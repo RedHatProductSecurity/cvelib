@@ -2,7 +2,7 @@ from setuptools import find_namespace_packages, setup
 
 install_requires = [
     "click>=7.1.2",
-    "requests>=2.24.0",
+    "requests>=2.32.0",
     "jsonschema>=4.7.2",
 ]
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.6.0...1.7.0) (Dec 5, 2024)
+
+* Updated CVE record schemas to version 5.1.1 (#96).
+* Added a new subcommand, `validate`, to verify that a CVE record (or a specific container of a record) is valid 
+  against a specific CVE v5 schema (#95).
+* Switched to a stricter version of the CVE ID matching regex (6f18918).
+
 ## [1.6.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.5.0...1.6.0) (Oct 11, 2024)
 
 * Subcommands that not require authentication credentials no longer require `-u/-o/-a` options to be set (#93).
