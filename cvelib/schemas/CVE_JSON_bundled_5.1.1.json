@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "$id": "https://cveproject.github.io/cve-schema/schema/docs/CVE_Record_Format_bundled.json",
+  "$id": "https://cveproject.github.io/cve-schema/schema/CVE_Record_Format.json",
   "title": "CVE JSON record format",
   "description": "cve-schema specifies the CVE JSON record format. This is the blueprint for a rich set of JSON data that can be submitted by CVE Numbering Authorities (CNAs) and Authorized Data Publishers (ADPs) to describe a CVE Record. Some examples of CVE Record data include CVE ID number, affected product(s), affected version(s), and public references. While those specific items are required when assigning a CVE, there are many other optional data in the schema that can be used to enrich CVE Records for community benefit. Learn more about the CVE program at [the official website](https://cve.mitre.org). This CVE JSON record format is defined using JSON Schema. Learn more about JSON Schema [here](https://json-schema.org/).",
   "definitions": {
@@ -78,6 +78,20 @@
     "cveId": {
       "type": "string",
       "pattern": "^CVE-[0-9]{4}-[0-9]{4,19}$"
+    },
+    "cpe22and23": {
+      "type": "string",
+      "description": "Common Platform Enumeration (CPE) Name in either 2.2 or 2.3 format",
+      "pattern": "([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9._\\-~%]*){0,6})|(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
+      "minLength": 1,
+      "maxLength": 2048
+    },
+    "cpe23": {
+      "type": "string",
+      "description": "Common Platform Enumeration (CPE) Name in 2.3 format",
+      "pattern": "(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
+      "minLength": 1,
+      "maxLength": 2048
     },
     "orgId": {
       "description": "A UUID for an organization participating in the CVE program. This UUID can be used to lookup the organization record in the user registry service.",
@@ -244,15 +258,12 @@
         },
         "cpes": {
           "type": "array",
-          "description": "Affected products defined by CPE. This is an array of CPE values (vulnerable and not), we use an array so that we can make multiple statements about the same version and they are separate (if we used a JSON object we'd essentially be keying on the CPE name and they would have to overlap). Also, this allows things like cveDataVersion or cveDescription to be applied directly to the product entry. This also allows more complex statements such as \"Product X between versions 10.2 and 10.8\" to be put in a machine-readable format. As well since multiple statements can be used multiple branches of the same product can be defined here.",
+          "description": "Affected products defined by CPE. This is an array of CPE values (vulnerable and not), we use an array so that we can make multiple statements about the same version and they are separate (if we used a JSON object we'd essentially be keying on the CPE name and they would have to overlap). Also, this allows things like cveDataVersion or cveDescription to be applied directly to the product entry. This also allows more complex statements such as \"Product X between versions 10.2 and 10.8\" to be put in a machine-readable format. As well since multiple statements can be used multiple branches of the same product can be defined here. NOTE: Consider using the newer cpeApplicability block for defining CPE data using the CPE Applicability Language which includes more options for defining CPE Names.",
           "uniqueItems": true,
           "items": {
             "title": "CPE Name",
-            "type": "string",
             "description": "Common Platform Enumeration (CPE) Name in either 2.2 or 2.3 format",
-            "pattern": "([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9._\\-~%]*){0,6})|(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
-            "minLength": 1,
-            "maxLength": 2048
+            "$ref": "#/definitions/cpe22and23"
           }
         },
         "modules": {
@@ -445,7 +456,7 @@
       "description": "The version of the CVE schema used for validating this record. Used to support multiple versions of this format.",
       "type": "string",
       "pattern": "^5\\.(0|[1-9][0-9]*)(\\.(0|[1-9][0-9]*))?$",
-      "default": "5.1.0"
+      "default": "5.1.1"
     },
     "cveMetadataPublished": {
       "description": "This is meta data about the CVE ID such as the CVE ID, who requested it, who assigned it, when it was requested, the current state (PUBLISHED, REJECTED, etc.) and so on.  These fields are controlled by the CVE Services.",
@@ -573,6 +584,87 @@
       ],
       "additionalProperties": false
     },
+    "cpeApplicabilityElement": {
+      "description": "Affected products defined using an implementation of the CPE Applicability Language, mostly copied/forked from the NIST NVD CVE API v2.0 schema (optional). An operator property allows AND or OR logic between CPEs or combinations of CPEs. The negate and vulnerable Boolean properties allow CPEs to be inverted and/or defined as vulnerable or not. Multiple version fields are provided for capturing ranges of products when defining a CPE Match String Range. NOTE: When defining a cpeApplicability block, it is recommended that it align with (as much as possible) the product data provided within the affected block.",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": [
+            "AND",
+            "OR"
+          ]
+        },
+        "negate": {
+          "type": "boolean"
+        },
+        "nodes": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cpe_node"
+          }
+        }
+      },
+      "required": [
+        "nodes"
+      ]
+    },
+    "cpe_node": {
+      "description": "Defines a CPE configuration node in an applicability statement.",
+      "properties": {
+        "operator": {
+          "type": "string",
+          "enum": [
+            "AND",
+            "OR"
+          ]
+        },
+        "negate": {
+          "type": "boolean"
+        },
+        "cpeMatch": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cpe_match"
+          }
+        }
+      },
+      "required": [
+        "operator",
+        "cpeMatch"
+      ]
+    },
+    "cpe_match": {
+      "description": "CPE match string or range",
+      "type": "object",
+      "properties": {
+        "vulnerable": {
+          "type": "boolean"
+        },
+        "criteria": {
+          "$ref": "#/definitions/cpe23"
+        },
+        "matchCriteriaId": {
+          "$ref": "#/definitions/uuidType"
+        },
+        "versionStartExcluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionStartIncluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionEndExcluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionEndIncluding": {
+          "$ref": "#/definitions/version"
+        }
+      },
+      "required": [
+        "vulnerable",
+        "criteria"
+      ],
+      "additionalProperties": false
+    },
     "cnaPublishedContainer": {
       "description": "An object containing the vulnerability information provided by a CVE Numbering Authority (CNA) for a published CVE ID. There can only be one CNA container per CVE record since there can only be one assigning CNA. The CNA container must include the required information defined in the CVE Rules, which includes a product, version, problem type, prose description, and a reference.",
       "type": "object",
@@ -599,6 +691,12 @@
         },
         "affected": {
           "$ref": "#/definitions/affected"
+        },
+        "cpeApplicability": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cpeApplicabilityElement"
+          }
         },
         "problemTypes": {
           "$ref": "#/definitions/problemTypes"
@@ -705,6 +803,12 @@
         },
         "affected": {
           "$ref": "#/definitions/affected"
+        },
+        "cpeApplicability": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/cpeApplicabilityElement"
+          }
         },
         "problemTypes": {
           "$ref": "#/definitions/problemTypes"

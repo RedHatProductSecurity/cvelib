@@ -44,6 +44,101 @@
       "type": "array",
       "uniqueItems": true
     },
+    "cpe22and23": {
+      "description": "Common Platform Enumeration (CPE) Name in either 2.2 or 2.3 format",
+      "maxLength": 2048,
+      "minLength": 1,
+      "pattern": "([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9._\\-~%]*){0,6})|(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
+      "type": "string"
+    },
+    "cpe23": {
+      "description": "Common Platform Enumeration (CPE) Name in 2.3 format",
+      "maxLength": 2048,
+      "minLength": 1,
+      "pattern": "(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
+      "type": "string"
+    },
+    "cpeApplicabilityElement": {
+      "description": "Affected products defined using an implementation of the CPE Applicability Language, mostly copied/forked from the NIST NVD CVE API v2.0 schema (optional). An operator property allows AND or OR logic between CPEs or combinations of CPEs. The negate and vulnerable Boolean properties allow CPEs to be inverted and/or defined as vulnerable or not. Multiple version fields are provided for capturing ranges of products when defining a CPE Match String Range. NOTE: When defining a cpeApplicability block, it is recommended that it align with (as much as possible) the product data provided within the affected block.",
+      "properties": {
+        "negate": {
+          "type": "boolean"
+        },
+        "nodes": {
+          "items": {
+            "$ref": "#/definitions/cpe_node"
+          },
+          "type": "array"
+        },
+        "operator": {
+          "enum": [
+            "AND",
+            "OR"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "nodes"
+      ]
+    },
+    "cpe_match": {
+      "additionalProperties": false,
+      "description": "CPE match string or range",
+      "properties": {
+        "criteria": {
+          "$ref": "#/definitions/cpe23"
+        },
+        "matchCriteriaId": {
+          "$ref": "#/definitions/uuidType"
+        },
+        "versionEndExcluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionEndIncluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionStartExcluding": {
+          "$ref": "#/definitions/version"
+        },
+        "versionStartIncluding": {
+          "$ref": "#/definitions/version"
+        },
+        "vulnerable": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "vulnerable",
+        "criteria"
+      ],
+      "type": "object"
+    },
+    "cpe_node": {
+      "description": "Defines a CPE configuration node in an applicability statement.",
+      "properties": {
+        "cpeMatch": {
+          "items": {
+            "$ref": "#/definitions/cpe_match"
+          },
+          "type": "array"
+        },
+        "negate": {
+          "type": "boolean"
+        },
+        "operator": {
+          "enum": [
+            "AND",
+            "OR"
+          ],
+          "type": "string"
+        }
+      },
+      "required": [
+        "operator",
+        "cpeMatch"
+      ]
+    },
     "credits": {
       "description": "Statements acknowledging specific people, organizations, or tools recognizing the work done in researching, discovering, remediating or helping with activities related to this CVE.",
       "items": {
@@ -2529,14 +2624,11 @@
           ]
         },
         "cpes": {
-          "description": "Affected products defined by CPE. This is an array of CPE values (vulnerable and not), we use an array so that we can make multiple statements about the same version and they are separate (if we used a JSON object we'd essentially be keying on the CPE name and they would have to overlap). Also, this allows things like cveDataVersion or cveDescription to be applied directly to the product entry. This also allows more complex statements such as \"Product X between versions 10.2 and 10.8\" to be put in a machine-readable format. As well since multiple statements can be used multiple branches of the same product can be defined here.",
+          "description": "Affected products defined by CPE. This is an array of CPE values (vulnerable and not), we use an array so that we can make multiple statements about the same version and they are separate (if we used a JSON object we'd essentially be keying on the CPE name and they would have to overlap). Also, this allows things like cveDataVersion or cveDescription to be applied directly to the product entry. This also allows more complex statements such as \"Product X between versions 10.2 and 10.8\" to be put in a machine-readable format. As well since multiple statements can be used multiple branches of the same product can be defined here. NOTE: Consider using the newer cpeApplicability block for defining CPE data using the CPE Applicability Language which includes more options for defining CPE Names.",
           "items": {
+            "$ref": "#/definitions/cpe22and23",
             "description": "Common Platform Enumeration (CPE) Name in either 2.2 or 2.3 format",
-            "maxLength": 2048,
-            "minLength": 1,
-            "pattern": "([c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9._\\-~%]*){0,6})|(cpe:2\\.3:[aho*\\-](:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){5}(:(([a-zA-Z]{2,3}(-([a-zA-Z]{2}|[0-9]{3}))?)|[*\\-]))(:(((\\?*|\\*?)([a-zA-Z0-9\\-._]|(\\\\[\\\\*?!\"#$%&'()+,/:;<=>@\\[\\]\\^`{|}~]))+(\\?*|\\*?))|[*\\-])){4})",
-            "title": "CPE Name",
-            "type": "string"
+            "title": "CPE Name"
           },
           "type": "array",
           "uniqueItems": true
@@ -3006,6 +3098,12 @@
     "configurations": {
       "$ref": "#/definitions/configurations"
     },
+    "cpeApplicability": {
+      "items": {
+        "$ref": "#/definitions/cpeApplicabilityElement"
+      },
+      "type": "array"
+    },
     "credits": {
       "$ref": "#/definitions/credits"
     },
@@ -3069,6 +3167,6 @@
     "affected",
     "references"
   ],
-  "title": "CVE_JSON_cnaPublishedContainer_5.1.0",
+  "title": "CVE_JSON_cnaPublishedContainer_5.1.1",
   "type": "object"
 }
