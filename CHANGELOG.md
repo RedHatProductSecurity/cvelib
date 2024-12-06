@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.7.1](https://github.com/RedHatProductSecurity/cvelib/compare/1.7.0...1.7.1) (Dec 6, 2024)
+
+* Fixed unnecessarily requiring authentication option to be specified for `validate` subcommand (#99).
+
 ## [1.7.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.6.0...1.7.0) (Dec 5, 2024)
 
 * Updated CVE record schemas to version 5.1.1 (#96).
