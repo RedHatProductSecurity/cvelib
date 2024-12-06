@@ -234,7 +234,7 @@ class SkipRequiredIf(click.Group):
         require authentication values.
         """
         if any(arg in ctx.help_option_names for arg in args) or any(
-            arg in ("ping", "show") for arg in args
+            arg in ("ping", "show", "validate") for arg in args
         ):
             # Iterate over all options and flip them to not required and not to prompt for input.
             for param in self.params:
