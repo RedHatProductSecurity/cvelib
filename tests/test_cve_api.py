@@ -1,9 +1,12 @@
 import json
+import os
 import pickle
 from pathlib import Path
+from unittest import mock
 
 import pytest
 
+from cvelib import __version__
 from cvelib.cve_api import CveApi, CveRecord, CveRecordValidationError
 
 
@@ -53,3 +56,41 @@ def test_cve_record_validation_error_is_picklable():
         # Errors do not survive pickling because they include jsonschema-specific objects that
         # are not picklable.
         assert unpickled_exc.errors is None
+
+
+class TestGeneratorMetadata:
+
+    @pytest.fixture
+    def sample_cve_json(self):
+        with open(Path(__file__).parent / "data/CVEv5_basic-example.json") as record_file:
+            return json.load(record_file)
+
+    def test_add_generator_default(self, sample_cve_json):
+        cve_json = sample_cve_json.copy()
+        result = CveApi._add_generator(cve_json)
+        assert "x_generator" in result
+        assert result["x_generator"]["engine"] == f"cvelib {__version__}"
+
+    def test_add_generator_custom(self, sample_cve_json):
+        custom_generator = "awesome_cve_cli 1.2.3"
+        with mock.patch.dict(os.environ, {"CVE_GENERATOR": custom_generator}):
+            cve_json = sample_cve_json.copy()
+            result = CveApi._add_generator(cve_json)
+            assert "x_generator" in result
+            assert result["x_generator"]["engine"] == custom_generator
+
+    def test_generator_not_added(self, sample_cve_json):
+        with mock.patch.dict(os.environ, {"CVE_GENERATOR": "-"}):
+            cve_json = sample_cve_json.copy()
+            result = CveApi._add_generator(cve_json)
+            assert "x_generator" not in result
+
+    def test_generator_not_overridden(self, sample_cve_json):
+        cve_json = sample_cve_json.copy()
+        original_value = {"engine": "cve_cli 9.8.7"}
+        cve_json["x_generator"] = original_value
+
+        with mock.patch.dict(os.environ, {"CVE_GENERATOR": "should_not_be_used"}):
+            result = CveApi._add_generator(cve_json)
+            assert "x_generator" in result
+            assert result["x_generator"] == original_value
