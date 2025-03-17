@@ -117,6 +117,11 @@ Additional options that have an accompanying environment variable include:
   before a request is sent to CVE Services. Truthy values for the environment variable are:
   `1`, `t`, `yes`.
 
+* `CVE_GENERATOR`: override the default value of `cvelib x.y.z` that is injected into the
+  `x_generator` field of every published or updated CVE record. If you'd prefer to omit setting
+  the field entirely, set the value to `-` (dash character; `export CVE_GENERATOR=-`). Existing
+  `x_generator` values are not overwritten.
+
 ### Command Autocompletion
 
 Autocompletion of subcommands is supported for the following shells:

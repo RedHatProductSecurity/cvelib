@@ -1,4 +1,5 @@
 import json
+import os
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -7,6 +8,8 @@ from urllib.parse import urljoin
 
 import requests
 from jsonschema import Draft7Validator
+
+from cvelib import __version__
 
 SCHEMA_DIR = Path(__file__).parent / "schemas"
 
@@ -178,10 +181,33 @@ class CveApi:
             cve_json["providerMetadata"] = {"orgId": org_id}
         return cve_json
 
+    @staticmethod
+    def _add_generator(cve_json: dict) -> dict:
+        """Add the x_generator field to the CVE record if defined.
+
+        Determine and inject the value of the x_generator field into all created/updated CVE
+        records to identify this library as the tool that was used to do so. Override this value
+        via the CVE_GENERATOR env var; set this env var to the value of "-" to omit adding this
+        field into the CVE record. Existing x_generator values are not overridden.
+        """
+        generator = os.getenv("CVE_GENERATOR")
+
+        # Skip adding the x_generator field if undesired or already present
+        if generator == "-" or "x_generator" in cve_json:
+            return cve_json
+
+        # If no custom value is specified, use cvelib
+        if generator is None:
+            generator = f"cvelib {__version__}"
+
+        cve_json["x_generator"] = {"engine": generator}
+        return cve_json
+
     def publish(self, cve_id: str, cve_json: dict, validate: bool = True) -> dict:
         """Publish a CVE from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
         cve_json = self._add_provider_metadata(cve_json)
+        cve_json = self._add_generator(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
 
@@ -194,6 +220,7 @@ class CveApi:
         """Update a published CVE record from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
         cve_json = self._add_provider_metadata(cve_json)
+        cve_json = self._add_generator(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_PUBLISHED)
 
@@ -206,6 +233,7 @@ class CveApi:
         """Add or update an ADP container from a JSON object representing the ADP container data."""
         cve_json = self._extract_adp_container(cve_json)
         cve_json = self._add_provider_metadata(cve_json)
+        cve_json = self._add_generator(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.ADP)
 
@@ -218,6 +246,7 @@ class CveApi:
         """Reject a CVE from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
         cve_json = self._add_provider_metadata(cve_json)
+        cve_json = self._add_generator(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
 
@@ -230,6 +259,7 @@ class CveApi:
         """Update a rejected CVE record from a JSON object representing the CNA container data."""
         cve_json = self._extract_cna_container(cve_json)
         cve_json = self._add_provider_metadata(cve_json)
+        cve_json = self._add_generator(cve_json)
         if validate:
             CveRecord.validate(cve_json, CveRecord.Schemas.CNA_REJECTED)
 
