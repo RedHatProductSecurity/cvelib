@@ -825,7 +825,7 @@ def show_cve(
 @click.option(
     "--state",
     type=click.Choice(CveApi.States.values(), case_sensitive=False),
-    help="Filter by reservation state.",
+    help="Filter by reservation/record state.",
 )
 @click.option(
     "--reserved-lt", type=click.DateTime(), help="Filter by reservation time before timestamp."
@@ -875,6 +875,34 @@ def list_cves(
             )
         )
     print_table(lines, highlight_header=not no_header)
+
+
+@cli.command()
+@click.option(
+    "--state",
+    type=click.Choice(
+        [str(CveApi.States.PUBLISHED), str(CveApi.States.REJECTED)], case_sensitive=False
+    ),
+    help="Filter count by record state.",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def count(ctx: click.Context, state: Optional[str], print_raw: bool) -> None:
+    """Display the total count of CVE records, optionally filtered by state.
+
+    This retrieves the count of all CVE records across all organizations, and can be
+    filtered by state (PUBLISHED, REJECTED).
+    """
+    cve_api = ctx.obj.cve_api
+    count_data = cve_api.count_cves(state=state)
+
+    if print_raw:
+        print_json_data(count_data)
+        return
+
+    state_text = f" in {state.upper()} state" if state else ""
+    click.echo(f"Total CVE records{state_text}: {count_data['totalCount']}")
 
 
 @cli.command()
