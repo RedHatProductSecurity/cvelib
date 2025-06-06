@@ -94,3 +94,17 @@ class TestGeneratorMetadata:
             result = CveApi._add_generator(cve_json)
             assert "x_generator" in result
             assert result["x_generator"] == original_value
+
+
+def test_count_cves():
+    with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+        get_mock.return_value.json.return_value = {"totalCount": 42}
+        cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+        count = cve_api.count_cves()
+        get_mock.assert_called_with("cve_count", params={})
+        assert count == {"totalCount": 42}
+
+        count = cve_api.count_cves(state="published")
+        get_mock.assert_called_with("cve_count", params={"state": "PUBLISHED"})
+        assert count == {"totalCount": 42}

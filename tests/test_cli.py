@@ -268,6 +268,32 @@ def test_cve_list():
         )
 
 
+def test_count():
+    count_response = {"totalCount": 123}
+    with mock.patch("cvelib.cli.CveApi.count_cves") as count_cves:
+        count_cves.return_value = count_response
+
+        # No state filter
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["count"])
+        assert result.exit_code == 0, result.output
+        assert result.output == "Total CVE records: 123\n"
+        count_cves.assert_called_with(state=None)
+
+        # With state filter
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["count", "--state", "published"])
+        assert result.exit_code == 0, result.output
+        assert result.output == "Total CVE records in PUBLISHED state: 123\n"
+        count_cves.assert_called_with(state="PUBLISHED")
+
+        # Raw output
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["count", "--raw"])
+        assert result.exit_code == 0, result.output
+        assert json.loads(result.output) == count_response
+
+
 class TestCvePublish:
     cve_id = "CVE-2001-0635"
     cna_dict = {

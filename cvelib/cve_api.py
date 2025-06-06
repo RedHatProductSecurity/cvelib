@@ -327,6 +327,16 @@ class CveApi:
             params["time_reserved.gt"] = reserved_gt.isoformat()
         return self._get_paged("cve-id", page_data_attr="cve_ids", params=params)
 
+    def count_cves(self, state: Optional[str] = None) -> dict:
+        """Return the count of CVE records, optionally filtered by state.
+
+        Only RESERVED and PUBLISHED CVE records can be counted.
+        """
+        params = {}
+        if state:
+            params["state"] = state.upper()
+        return self._get("cve_count", params=params).json()
+
     def quota(self) -> dict:
         return self._get(f"org/{self.org}/id_quota").json()
 
