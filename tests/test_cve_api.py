@@ -59,7 +59,6 @@ def test_cve_record_validation_error_is_picklable():
 
 
 class TestGeneratorMetadata:
-
     @pytest.fixture
     def sample_cve_json(self):
         with open(Path(__file__).parent / "data/CVEv5_basic-example.json") as record_file:

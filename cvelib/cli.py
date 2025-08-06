@@ -402,7 +402,7 @@ def publish(
     else:
         click.echo("Published the following CVE:\n")
         print_cve_record(response_data["created"] if created else response_data["updated"])
-        click.echo(f'\nAPI response: {response_data["message"]}')
+        click.echo(f"\nAPI response: {response_data['message']}")
 
 
 @cli.command()
@@ -489,7 +489,7 @@ def publish_adp(
     else:
         click.echo("Published an ADP container for:\n")
         print_cve_record(response_data["updated"])
-        click.echo(f'\nAPI response: {response_data["message"]}')
+        click.echo(f"\nAPI response: {response_data['message']}")
 
 
 @cli.command()
@@ -597,7 +597,7 @@ def reject(
     else:
         click.echo("Rejected the following CVE:\n")
         print_cve_record(response_data["created"] if created else response_data["updated"])
-        click.echo(f'\nAPI response: {response_data["message"]}')
+        click.echo(f"\nAPI response: {response_data['message']}")
 
 
 @cli.command()
