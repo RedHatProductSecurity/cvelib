@@ -106,3 +106,6 @@ dmypy.json
 
 # Editors
 .idea/
+
+# uv
+uv.lock

@@ -13,6 +13,9 @@ A library and a command line interface for the CVE Services API.
 
 ### Linux, MacOS, Windows
 
+
+#### pip
+
 ```bash
 python3 -m pip install --user cvelib
 ```
@@ -31,6 +34,20 @@ Check the spelling of the name, or if a path was included, verify that the path 
 To resolve this error, add the file path for where your `cve.exe` file resides (for example,
 `C:\Users\<username>\AppData\Roaming\Python\Python39\Scripts`) to your `PATH` variable. You can
 edit your environment variables by searching *Edit the system environment variables* from the Start menu.
+
+#### uv
+
+To run the `cve` command using [uvx](https://docs.astral.sh/uv/guides/tools/), execute:
+
+```
+uvx --from cvelib cve --help
+```
+
+or to install it, execute:
+
+```
+uv tool install cvelib
+```
 
 ### Podman/Docker
 
@@ -241,61 +258,66 @@ For more information, see the individual methods defined in the
 
 ## Development Setup
 
+[uv](https://github.com/astral-sh/uv) is the recommended tool for local development:
+
 ```bash
-git clone https://github.com/RedHatProductSecurity/cvelib.git
-cd cvelib
-python3 -m venv venv
-source venv/bin/activate
-pip install --upgrade pip
-pip install -e .
-pip install tox
-# If you want to use any of the dev dependencies outside of Tox, you can install them all with:
-pip install -e .[dev]
+git clone https://github.com/RedHatProductSecurity/cvelib.git && cd cvelib
+uv sync --dev
+```
+
+The `uv sync --dev` command will:
+- Create a virtual environment in `.venv/`
+- Install the project in editable mode
+- Install all development dependencies (test, dev groups)
+
+To run all of the below commands without `uv run`, activate the virtual environment:
+
+```bash
+source .venv/bin/activate
 ```
 
 To enable command autocompletion when using a virtual environment, add the line noted in `Command Autocompletion`
-above to your `venv/bin/activate` file, for example:
+above to your virtual environment's activate file:
 
 ```bash
-echo 'eval "$(_CVE_COMPLETE=bash_source cve)"' >> venv/bin/activate
+echo 'eval "$(_CVE_COMPLETE=bash_source cve)"' >> .venv/bin/activate
 ```
 
 This project uses [ruff formatter](https://docs.astral.sh/ruff/formatter/) for code formatting.
 To reformat the entire code base after you make any changes, run:
 
 ```bash
-ruff format .
+uv run ruff format .
 ```
 
 To sort all imports using [ruff's import sorting](https://docs.astral.sh/ruff/rules/#isort-i), run:
 
 ```bash
-ruff check --select I --fix .
+uv run ruff check --select I --fix .
 ```
 
 Running tests and linters:
 
 ```bash
 # Run all tests and format/lint checks (also run as a Github action)
-tox
+uv run tox
 # Run lint check only
-tox -e ruff-lint
+uv run tox -e ruff-lint
 # Run format check only
-tox -e ruff-format
+uv run tox -e ruff-format
 # Run tests using a specific version of Python
-tox -e py313
+uv run tox -e py313
 # Run a single test using a specific version of Python
-tox -e py313 -- tests/test_cli.py::test_cve_show
+uv run tox -e py313 -- tests/test_cli.py::test_cve_show
 ```
 
 Any changes in the commands, their options, or help texts must be reflected in the generated man pages. To refresh
 them, run:
 
 ```bash
-pip install click-man
-click-man cve
+uv run click-man cve
 # OR
-tox -e manpages
+uv run tox -e manpages
 ```
 
 ---
