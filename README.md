@@ -260,14 +260,14 @@ above to your `venv/bin/activate` file, for example:
 echo 'eval "$(_CVE_COMPLETE=bash_source cve)"' >> venv/bin/activate
 ```
 
-This project uses the [Black](https://black.readthedocs.io) code formatter. To reformat the entire code base after you make any changes, run:
+This project uses [ruff formatter](https://docs.astral.sh/ruff/formatter/) for code formatting.
+To reformat the entire code base after you make any changes, run:
 
 ```bash
-black .
+ruff format .
 ```
 
-To sort all imports using [ruff](https://docs.astral.sh/ruff/) (which replicates the behavior of
-[isort](https://pycqa.github.io/isort/), run:
+To sort all imports using [ruff's import sorting](https://docs.astral.sh/ruff/rules/#isort-i), run:
 
 ```bash
 ruff check --select I --fix .
@@ -278,8 +278,10 @@ Running tests and linters:
 ```bash
 # Run all tests and format/lint checks (also run as a Github action)
 tox
+# Run lint check only
+tox -e ruff-lint
 # Run format check only
-tox -e black
+tox -e ruff-format
 # Run tests using a specific version of Python
 tox -e py313
 # Run a single test using a specific version of Python

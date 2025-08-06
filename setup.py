@@ -12,7 +12,6 @@ tests_require = [
 
 dev_require = [
     *tests_require,
-    "black",
     "ruff",
     "click-man",
     "mypy",

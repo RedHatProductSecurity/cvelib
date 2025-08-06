@@ -375,7 +375,7 @@ class TestCvePublish:
 
         response_dict = {
             "created": self.cve_response_data,
-            "message": f"{self.cve_id} record was " f"successfully created.",
+            "message": f"{self.cve_id} record was successfully created.",
         }
         publish.return_value = response_dict
 
@@ -564,10 +564,7 @@ def test_quota():
         result = runner.invoke(cli, DEFAULT_OPTS + ["quota"])
         assert result.exit_code == 0, result.output
         assert result.output == (
-            "CNA quota for test_org:\n"
-            "├─ Limit:\t100\n"
-            "├─ Reserved:\t10\n"
-            "└─ Available:\t90\n"
+            "CNA quota for test_org:\n├─ Limit:\t100\n├─ Reserved:\t10\n└─ Available:\t90\n"
         )
 
 
