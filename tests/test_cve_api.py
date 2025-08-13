@@ -107,3 +107,23 @@ def test_count_cves():
         count = cve_api.count_cves(state="published")
         get_mock.assert_called_with("cve_count", params={"state": "PUBLISHED"})
         assert count == {"totalCount": 42}
+
+
+def test_transfer():
+    with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+        response = {
+            "updated": "CVE-2099-1234",
+            "message": "CVE-2099-1234 owning_cna updated",
+            "cve_id": "CVE-2099-1234",
+            "owning_cna": "new-cna",
+            "state": "RESERVED",
+            "requested_by": {"cna": "old-cna", "user": "test@example.com"},
+            "reserved": "2021-01-14T18:35:17.469Z",
+            "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.469Z"},
+        }
+        put_mock.return_value.json.return_value = response
+        cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+        result = cve_api.transfer("CVE-2099-1234", "new-cna")
+        put_mock.assert_called_with("cve-id/CVE-2099-1234", params={"org": "new-cna"})
+        assert result == response
