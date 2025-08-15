@@ -556,6 +556,99 @@ def test_cve_undo_reject(move_to_reserved):
     )
 
 
+@mock.patch("cvelib.cli.CveApi.transfer")
+def test_cve_transfer(transfer):
+    cve_id = "CVE-2023-1234"
+    response = {
+        "updated": {
+            "cve_id": "CVE-2023-1234",
+            "cve_year": "2023",
+            "owning_cna": "new-cna",
+            "requested_by": {"cna": "old-cna", "user": "test@example.com"},
+            "reserved": "2021-01-14T18:35:17.469Z",
+            "state": "RESERVED",
+            "time": {"created": "2021-01-14T18:35:17.469Z", "modified": "2021-01-14T18:35:17.469Z"},
+        },
+        "message": f"{cve_id} owning_cna updated",
+    }
+
+    transfer.return_value = response
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["transfer", cve_id, "--new-cna", "new-cna"])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "Successfully transferred the following CVE:\n"
+        "\n"
+        f"{cve_id}\n"
+        "├─ State:\tRESERVED\n"
+        "├─ Owning CNA:\tnew-cna\n"
+        "├─ Reserved by:\ttest@example.com (old-cna)\n"
+        "├─ Reserved on:\tThu Jan 14 18:35:17 2021 +0000\n"
+        "└─ Updated on:\tThu Jan 14 18:35:17 2021 +0000\n"
+    )
+    transfer.assert_called_once_with(cve_id, "new-cna")
+
+
+@mock.patch("cvelib.cli.CveApi.transfer")
+def test_cve_transfer_raw_output(transfer):
+    cve_id = "CVE-2023-1234"
+    response = {
+        "updated": {
+            "cve_id": "CVE-2023-1234",
+            "owning_cna": "new-cna",
+            "state": "RESERVED",
+        },
+        "message": f"{cve_id} owning_cna updated",
+    }
+
+    transfer.return_value = response
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, DEFAULT_OPTS + ["transfer", cve_id, "--new-cna", "new-cna", "--raw"]
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output) == response
+    transfer.assert_called_once_with(cve_id, "new-cna")
+
+
+@mock.patch("cvelib.cli.CveApi.transfer")
+def test_cve_transfer_interactive_confirm(transfer):
+    cve_id = "CVE-2023-1234"
+    transfer_response = {
+        "updated": {
+            "cve_id": "CVE-2023-1234",
+            "owning_cna": "new-cna",
+            "state": "RESERVED",
+        },
+        "message": f"{cve_id} owning_cna updated",
+    }
+
+    transfer.return_value = transfer_response
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, DEFAULT_OPTS + ["-i", "transfer", cve_id, "--new-cna", "new-cna"], input="y\n"
+    )
+    assert result.exit_code == 0, result.output
+    assert "You are about to transfer ownership of CVE-2023-1234 to CNA new-cna" in result.output
+    assert "Do you want to continue?" in result.output
+    transfer.assert_called_once_with(cve_id, "new-cna")
+
+
+@mock.patch("cvelib.cli.CveApi.transfer")
+def test_cve_transfer_interactive_abort(transfer):
+    cve_id = "CVE-2023-1234"
+
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, DEFAULT_OPTS + ["-i", "transfer", cve_id, "--new-cna", "new-cna"], input="n\n"
+    )
+    assert result.exit_code == 0, result.output
+    assert "You are about to transfer ownership of CVE-2023-1234 to CNA new-cna" in result.output
+    assert "Do you want to continue?" in result.output
+    assert "Exiting..." in result.output
+    transfer.assert_not_called()
+
+
 def test_quota():
     quota = {"id_quota": 100, "total_reserved": 10, "available": 90}
     with mock.patch("cvelib.cli.CveApi.quota") as get_quota:

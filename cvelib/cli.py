@@ -628,6 +628,43 @@ def undo_reject(ctx: click.Context, cve_id: str, print_raw: bool) -> None:
 
 
 @cli.command()
+@click.argument("cve_id", callback=validate_cve)
+@click.option(
+    "-n",
+    "--new-cna",
+    required=True,
+    help="Shortname of the new owning CNA for the CVE ID.",
+)
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def transfer(ctx: click.Context, cve_id: str, new_cna: str, print_raw: bool) -> None:
+    """Transfer ownership of a CVE ID to another CNA.
+
+    This command updates the owning_cna attribute of the specified CVE ID to transfer
+    ownership to another CNA organization. CNAs can only transfer CVE IDs they own.
+    """
+    if ctx.obj.interactive:
+        click.echo("You are about to transfer ownership of ", nl=False)
+        click.secho(cve_id, bold=True, nl=False)
+        click.echo(" to CNA ", nl=False)
+        click.secho(new_cna, bold=True, nl=False)
+        click.echo(".")
+        if not click.confirm("\nDo you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
+    cve_api = ctx.obj.cve_api
+    response_data = cve_api.transfer(cve_id, new_cna)
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("Successfully transferred the following CVE:\n")
+        print_cve_id(response_data["updated"])
+
+
+@cli.command()
 @click.option(
     "-r",
     "--random",

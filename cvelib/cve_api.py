@@ -289,6 +289,14 @@ class CveApi:
         params = {"state": self.States.RESERVED}
         return self._put(f"cve-id/{cve_id}", params=params).json()
 
+    def transfer(self, cve_id: str, new_cna: str) -> dict:
+        """Transfer ownership of a CVE ID to another CNA.
+
+        This updates the owning_cna attribute of the specified CVE ID.
+        """
+        params = {"org": new_cna}
+        return self._put(f"cve-id/{cve_id}", params=params).json()
+
     def reserve(self, count: int, random: bool, year: str) -> dict:
         """Reserve a set of CVE IDs.
 
