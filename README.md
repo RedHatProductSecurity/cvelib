@@ -320,6 +320,44 @@ uv run click-man cve
 uv run tox -e manpages
 ```
 
+## Releasing
+
+1. Make version bump release commit
+   ([example](https://github.com/RedHatProductSecurity/cvelib/commit/0e188b48b61a3659d1e923c08e4f980c034bf445))
+   that also refreshes all man pages and updates any compatibility statements in the README file. Merge the PR to master.
+2. Remove previously built packages and build new ones:
+   ```shell
+   $ rm dist/*
+   $ uv build
+   $ ls dist/  # You should see two artifacts in this directory afterwards, e.g.:
+   cvelib-0.6.0-py3-none-any.whl  cvelib-0.6.0.tar.gz
+   ```
+3. Publish package to PyPI test:
+   ```shell
+   uv publish --publish-url https://test.pypi.org/legacy/`
+   ```
+4. Test that installation and basic functionality work:
+   ```shell
+   uv run --no-cache --with cvelib --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple cve -h
+   ```
+   Replace `cve -h` with other commands to test other functionality.
+5. Publish package to PyPI:
+   ```shell
+   uv publish
+   ```
+6. Tag the version bump commit as 'x.y.z' and push to master:
+   ```shell
+   git tag 1.8.0
+   git push --tags
+   ```
+   This triggers a new container image build in Quay.io: https://quay.io/repository/prodsecdev/cvelib?tab=builds.
+7. When the container image build completes, move the _latest_ tag to point to new release:
+   https://quay.io/repository/prodsecdev/cvelib?tab=tags
+   (click cog icon next to new version) -> Add new tag -> latest -> Move tag)
+8. Create a release in GitHub manually against the newly pushed tag:
+   https://github.com/RedHatProductSecurity/cvelib/releases. Use the template from a previous release and add a list of
+   changes from the changelog.
+
 ---
 
 [CVE](https://cve.org) is a registered trademark of [The MITRE Corporation](https://www.mitre.org).
