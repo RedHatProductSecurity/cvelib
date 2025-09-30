@@ -1,5 +1,10 @@
 # Changelog
 
+## [1.8.0](https://github.com/RedHatProductSecurity/cvelib/compare/1.7.1...1.8.0) (Sep 29, 2025)
+
+*  Add support for the /cve_count endpoint (#105).
+*  Add new subcommand for transfering CVE IDs to other CNAs (#109)
+
 ## [1.7.1](https://github.com/RedHatProductSecurity/cvelib/compare/1.7.0...1.7.1) (Dec 6, 2024)
 
 * Fixed unnecessarily requiring authentication option to be specified for `validate` subcommand (#99).

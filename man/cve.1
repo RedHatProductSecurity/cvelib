@@ -1,4 +1,4 @@
-.TH "CVE" "1" "2024-12-06" "1.7.1" "cve Manual"
+.TH "CVE" "1" "2025-09-29" "1.8.0" "cve Manual"
 .SH NAME
 cve \- A CLI interface for the CVE Services API.
 .SH SYNOPSIS
@@ -46,6 +46,10 @@ Show the version and exit.
   Move a rejected CVE ID without a record...
   See \fBcve-undo-reject(1)\fP for full documentation on the \fBundo-reject\fP command.
 .PP
+\fBtransfer\fP
+  Transfer ownership of a CVE ID to another...
+  See \fBcve-transfer(1)\fP for full documentation on the \fBtransfer\fP command.
+.PP
 \fBreserve\fP
   Reserve one or more CVE IDs.
   See \fBcve-reserve(1)\fP for full documentation on the \fBreserve\fP command.
@@ -57,6 +61,10 @@ Show the version and exit.
 \fBlist\fP
   Filter and list reserved CVE IDs owned by...
   See \fBcve-list(1)\fP for full documentation on the \fBlist\fP command.
+.PP
+\fBcount\fP
+  Display the total count of CVE records,...
+  See \fBcve-count(1)\fP for full documentation on the \fBcount\fP command.
 .PP
 \fBquota\fP
   Display the available CVE ID quota for...
