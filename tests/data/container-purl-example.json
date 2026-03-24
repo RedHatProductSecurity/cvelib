@@ -1,0 +1,70 @@
+{
+  "providerMetadata": {
+    "orgId": "b3476cb9-2e3d-41a6-98d0-0f47421a65b6"
+  },
+  "problemTypes": [
+    {
+      "descriptions": [
+        {
+          "lang": "en",
+          "description": "CWE-78 OS Command Injection"
+        }
+      ]
+    }
+  ],
+  "affected": [
+    {
+      "vendor": "Example.org",
+      "product": "Example Enterprise",
+      "packageURL": "pkg:npm/example",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "status": "affected",
+          "lessThan": "1.0.6",
+          "versionType": "semver"
+        }
+      ],
+      "defaultStatus": "unaffected"
+    },
+    {
+      "vendor": "Debian",
+      "product": "curl",
+      "packageURL": "pkg:deb/debian/curl?arch=i386&distro=jessie",
+      "versions": [
+        {
+          "version": "7.1.0",
+          "status": "affected",
+          "lessThan": "7.2.0",
+          "versionType": "semver"
+        }
+      ],
+      "defaultStatus": "unaffected"
+    },
+    {
+      "vendor": "Python",
+      "product": "urllib3",
+      "packageURL": "pkg:pypi/urllib3",
+      "versions": [
+        {
+          "version": "1.26.0",
+          "status": "unaffected",
+          "lessThanOrEqual": "1.26.5",
+          "versionType": "semver"
+        }
+      ],
+      "defaultStatus": "affected"
+    }
+  ],
+  "descriptions": [
+    {
+      "lang": "en",
+      "value": "Example vulnerability demonstrating Package URL (PURL) support in CVE JSON Schema 5.2.0. This vulnerability affects multiple packages across different package ecosystems including npm, Debian, and PyPI."
+    }
+  ],
+  "references": [
+    {
+      "url": "https://example.org/security/purl-vulnerability"
+    }
+  ]
+}
