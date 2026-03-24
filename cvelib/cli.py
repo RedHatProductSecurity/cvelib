@@ -204,6 +204,7 @@ class Config:
         env: str,
         api_url: Optional[str],
         interactive: bool,
+        legacy: bool = False,
     ) -> None:
         self.username = username
         self.org = org
@@ -211,6 +212,7 @@ class Config:
         self.env = env
         self.api_url = api_url
         self.interactive = interactive
+        self.legacy = legacy
         self.cve_api = self.init_cve_api()
 
     def init_cve_api(self) -> CveApi:
@@ -220,6 +222,7 @@ class Config:
             api_key=self.api_key,
             env=self.env,
             url=self.api_url,
+            use_legacy_endpoints=self.legacy,
         )
 
 
@@ -295,6 +298,12 @@ class SkipRequiredIf(click.Group):
     is_flag=True,
     help="Confirm create/update actions before execution (env var: CVE_INTERACTIVE)",
 )
+@click.option(
+    "--legacy",
+    default=False,
+    is_flag=True,
+    help="Use legacy org/user endpoints instead of new registry/org/user endpoints",
+)
 @click.version_option(
     __version__, "-V", "--version", prog_name="cvelib", message="%(prog)s %(version)s"
 )
@@ -307,9 +316,10 @@ def cli(
     env: str,
     api_url: Optional[str],
     interactive: bool,
+    legacy: bool,
 ) -> None:
     """A CLI interface for the CVE Services API."""
-    ctx.obj = Config(username, org, api_key, env, api_url, interactive)
+    ctx.obj = Config(username, org, api_key, env, api_url, interactive, legacy)
 
 
 @cli.command()

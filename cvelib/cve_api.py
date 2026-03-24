@@ -84,16 +84,32 @@ class CveApi:
         RECORD_DOES_NOT_EXIST = "CVE_RECORD_DNE"
 
     def __init__(
-        self, username: str, org: str, api_key: str, env: str = "prod", url: Optional[str] = None
+        self, username: str, org: str, api_key: str, env: str = "prod", url: Optional[str] = None,
+        use_legacy_endpoints: bool = False
     ) -> None:
         self.username = username
         self.org = org
         self.api_key = api_key
+        self.use_legacy_endpoints = use_legacy_endpoints
         if not url:
             url = self.ENVS.get(env)
             if not url:
                 raise ValueError("Missing URL for CVE API")
         self.url = url
+
+    def _org_path(self, path_suffix: str = "") -> str:
+        """Build organization endpoint path, using registry or legacy endpoints based on configuration."""
+        if self.use_legacy_endpoints:
+            return f"org/{self.org}{path_suffix}"
+        else:
+            return f"registry/org/{self.org}{path_suffix}"
+
+    def _user_path(self, username: str, path_suffix: str = "") -> str:
+        """Build user endpoint path, using registry or legacy endpoints based on configuration."""
+        if self.use_legacy_endpoints:
+            return f"org/{self.org}/user/{username}{path_suffix}"
+        else:
+            return f"registry/org/{self.org}/user/{username}{path_suffix}"
 
     def _http_request(self, method: str, path: str, **kwargs) -> requests.Response:
         url = urljoin(self.url, path)
@@ -346,25 +362,25 @@ class CveApi:
         return self._get("cve_count", params=params).json()
 
     def quota(self) -> dict:
-        return self._get(f"org/{self.org}/id_quota").json()
+        return self._get(self._org_path("/id_quota")).json()
 
     def show_user(self, username: str) -> dict:
-        return self._get(f"org/{self.org}/user/{username}").json()
+        return self._get(self._user_path(username)).json()
 
     def reset_api_key(self, username: str) -> dict:
-        return self._put(f"org/{self.org}/user/{username}/reset_secret").json()
+        return self._put(self._user_path(username, "/reset_secret")).json()
 
     def create_user(self, **user_data: dict) -> dict:
-        return self._post(f"org/{self.org}/user", json=user_data).json()
+        return self._post(self._org_path("/user"), json=user_data).json()
 
     def update_user(self, username, **user_data: dict) -> dict:
-        return self._put(f"org/{self.org}/user/{username}", params=user_data).json()
+        return self._put(self._user_path(username), params=user_data).json()
 
     def list_users(self) -> Iterator[dict]:
-        return self._get_paged(f"org/{self.org}/users", page_data_attr="users", params={})
+        return self._get_paged(self._org_path("/users"), page_data_attr="users", params={})
 
     def show_org(self) -> dict:
-        return self._get(f"org/{self.org}").json()
+        return self._get(self._org_path()).json()
 
     def ping(self) -> Optional[requests.exceptions.RequestException]:
         """Check the CVE API status.

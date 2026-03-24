@@ -127,3 +127,127 @@ def test_transfer():
         result = cve_api.transfer("CVE-2099-1234", "new-cna")
         put_mock.assert_called_with("cve-id/CVE-2099-1234", params={"org": "new-cna"})
         assert result == response
+
+
+class TestRegistryEndpoints:
+    """Tests for new registry/org and registry/user endpoints"""
+
+    def test_quota_uses_registry_endpoint(self):
+        """Test that quota uses registry/org endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"totalQuota": 100}
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.quota()
+            get_mock.assert_called_with("registry/org/test_org/id_quota")
+
+    def test_quota_uses_legacy_endpoint(self):
+        """Test that quota uses org endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"totalQuota": 100}
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.quota()
+            get_mock.assert_called_with("org/test_org/id_quota")
+
+    def test_show_user_uses_registry_endpoint(self):
+        """Test that show_user uses registry/org/user endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"username": "jane@example.com"}
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.show_user("jane@example.com")
+            get_mock.assert_called_with("registry/org/test_org/user/jane@example.com")
+
+    def test_show_user_uses_legacy_endpoint(self):
+        """Test that show_user uses org/user endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"username": "jane@example.com"}
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.show_user("jane@example.com")
+            get_mock.assert_called_with("org/test_org/user/jane@example.com")
+
+    def test_reset_api_key_uses_registry_endpoint(self):
+        """Test that reset_api_key uses registry/org/user endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+            put_mock.return_value.json.return_value = {"apiKey": "new_key"}
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.reset_api_key("jane@example.com")
+            put_mock.assert_called_with("registry/org/test_org/user/jane@example.com/reset_secret")
+
+    def test_reset_api_key_uses_legacy_endpoint(self):
+        """Test that reset_api_key uses org/user endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+            put_mock.return_value.json.return_value = {"apiKey": "new_key"}
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.reset_api_key("jane@example.com")
+            put_mock.assert_called_with("org/test_org/user/jane@example.com/reset_secret")
+
+    def test_create_user_uses_registry_endpoint(self):
+        """Test that create_user uses registry/org endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._post") as post_mock:
+            post_mock.return_value.json.return_value = {"username": "new_user@example.com"}
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.create_user(username="new_user@example.com")
+            post_mock.assert_called_with("registry/org/test_org/user", json={"username": "new_user@example.com"})
+
+    def test_create_user_uses_legacy_endpoint(self):
+        """Test that create_user uses org endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._post") as post_mock:
+            post_mock.return_value.json.return_value = {"username": "new_user@example.com"}
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.create_user(username="new_user@example.com")
+            post_mock.assert_called_with("org/test_org/user", json={"username": "new_user@example.com"})
+
+    def test_list_users_uses_registry_endpoint(self):
+        """Test that list_users uses registry/org endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._get_paged") as get_paged_mock:
+            get_paged_mock.return_value = iter([{"username": "user1@example.com"}])
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            list(cve_api.list_users())
+            get_paged_mock.assert_called_with("registry/org/test_org/users", page_data_attr="users", params={})
+
+    def test_list_users_uses_legacy_endpoint(self):
+        """Test that list_users uses org endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._get_paged") as get_paged_mock:
+            get_paged_mock.return_value = iter([{"username": "user1@example.com"}])
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            list(cve_api.list_users())
+            get_paged_mock.assert_called_with("org/test_org/users", page_data_attr="users", params={})
+
+    def test_show_org_uses_registry_endpoint(self):
+        """Test that show_org uses registry/org endpoint by default"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"shortName": "test_org"}
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.show_org()
+            get_mock.assert_called_with("registry/org/test_org")
+
+    def test_show_org_uses_legacy_endpoint(self):
+        """Test that show_org uses org endpoint when legacy flag is set"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            get_mock.return_value.json.return_value = {"shortName": "test_org"}
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.show_org()
+            get_mock.assert_called_with("org/test_org")
