@@ -2,7 +2,7 @@
 
 A library and a command line interface for the CVE Services API.
 
-**Note**: version 1.7.0 and later of cvelib is compatible with CVE Services 2.5.0 and CVE JSON schema 5.1.1.
+**Note**: version 1.7.0 and later of cvelib is compatible with CVE Services 2.5.0 and CVE JSON schema 5.1.1. Version 1.9.0 and later is compatible with CVE JSON schema 5.2.0.
 
 ## Requirements
 
