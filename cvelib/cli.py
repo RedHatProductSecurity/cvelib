@@ -701,6 +701,17 @@ def reserve(ctx: click.Context, random: bool, year: str, count: int, print_raw: 
         raise click.BadParameter("requesting non-sequential CVE IDs is limited to 10 per request.")
 
     if ctx.obj.interactive:
+        click.secho(
+            "WARNING: Have you consulted the upstream project or the Red Hat maintainer "
+            "before proceeding with CVE assignment?",
+            fg="yellow",
+            bold=True,
+        )
+        if not click.confirm("Do you want to continue?"):
+            click.echo("Exiting...")
+            sys.exit(0)
+        click.echo()
+
         click.echo("You are about to reserve ", nl=False)
         if count > 1:
             click.secho(
