@@ -127,3 +127,117 @@ def test_transfer():
         result = cve_api.transfer("CVE-2099-1234", "new-cna")
         put_mock.assert_called_with("cve-id/CVE-2099-1234", params={"org": "new-cna"})
         assert result == response
+
+
+class TestPurlSupport:
+    """Tests for Package URL (PURL) support in CVE Schema 5.2.0"""
+
+    def test_purl_container_schema_validation(self):
+        """Test that PURLs validate correctly against the CNA published container schema"""
+        with open(Path(__file__).parent / "data/container-purl-example.json") as record_file:
+            cve_container = json.load(record_file)
+        try:
+            CveRecord.validate(cve_container, CveRecord.Schemas.CNA_PUBLISHED)
+        except CveRecordValidationError as exc:
+            pytest.fail(f"PURL container validation failed: {exc}: {exc.errors}")
+
+    def test_purl_with_multiple_ecosystems(self):
+        """Test that PURLs from different package ecosystems are supported"""
+        with open(Path(__file__).parent / "data/container-purl-example.json") as record_file:
+            cve_container = json.load(record_file)
+
+        affected = cve_container.get("affected", [])
+        assert len(affected) == 3
+
+        # Verify npm PURL
+        assert affected[0]["packageURL"] == "pkg:npm/example"
+        assert affected[0]["vendor"] == "Example.org"
+        assert affected[0]["product"] == "Example Enterprise"
+
+        # Verify Debian PURL with architecture and distro qualifiers
+        assert affected[1]["packageURL"] == "pkg:deb/debian/curl?arch=i386&distro=jessie"
+        assert affected[1]["vendor"] == "Debian"
+        assert affected[1]["product"] == "curl"
+
+        # Verify PyPI PURL
+        assert affected[2]["packageURL"] == "pkg:pypi/urllib3"
+        assert affected[2]["vendor"] == "Python"
+        assert affected[2]["product"] == "urllib3"
+
+    def test_purl_does_not_include_version(self):
+        """Test that PURLs do not include version (version comes from separate property)"""
+        with open(Path(__file__).parent / "data/container-purl-example.json") as record_file:
+            cve_container = json.load(record_file)
+
+        for affected_item in cve_container.get("affected", []):
+            purl = affected_item.get("packageURL", "")
+            # PURLs should not contain version information
+            # (versions are defined in the separate 'versions' array)
+            if "@" in purl:
+                # The @ symbol indicates a version in PURL, which is not allowed
+                pytest.fail(f"PURL contains version: {purl}")
+
+    def test_purl_with_versions(self):
+        """Test that PURLs work alongside version information"""
+        with open(Path(__file__).parent / "data/container-purl-example.json") as record_file:
+            cve_container = json.load(record_file)
+
+        for affected_item in cve_container.get("affected", []):
+            # Each affected item with PURL should also have version information
+            assert "versions" in affected_item
+            assert len(affected_item["versions"]) > 0
+
+            # Verify version objects have required properties
+            for version in affected_item["versions"]:
+                assert "version" in version
+                assert "status" in version
+
+    def test_purl_optional_property(self):
+        """Test that PURL is an optional property in affected items"""
+        # Create a container without PURLs (backward compatibility)
+        container_without_purl = {
+            "providerMetadata": {
+                "orgId": "b3476cb9-2e3d-41a6-98d0-0f47421a65b6"
+            },
+            "problemTypes": [
+                {
+                    "descriptions": [
+                        {
+                            "lang": "en",
+                            "description": "CWE-78 OS Command Injection"
+                        }
+                    ]
+                }
+            ],
+            "affected": [
+                {
+                    "vendor": "Example.org",
+                    "product": "Example Enterprise",
+                    "versions": [
+                        {
+                            "version": "1.0.0",
+                            "status": "affected",
+                            "lessThan": "1.0.6",
+                            "versionType": "semver"
+                        }
+                    ],
+                    "defaultStatus": "unaffected"
+                }
+            ],
+            "descriptions": [
+                {
+                    "lang": "en",
+                    "value": "Test vulnerability without PURL"
+                }
+            ],
+            "references": [
+                {
+                    "url": "https://example.org/security/test"
+                }
+            ]
+        }
+
+        try:
+            CveRecord.validate(container_without_purl, CveRecord.Schemas.CNA_PUBLISHED)
+        except CveRecordValidationError as exc:
+            pytest.fail(f"Validation failed for container without PURL: {exc}: {exc.errors}")

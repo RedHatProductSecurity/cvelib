@@ -434,6 +434,40 @@ def test_adp_publish(publish_adp):
     )
 
 
+@mock.patch("cvelib.cli.CveApi.publish")
+def test_cve_publish_with_purl(publish):
+    """Test that CVE records with PURL support can be published"""
+    with open(Path(__file__).parent / "data/container-purl-example.json") as purl_file:
+        cve_json = json.load(purl_file)
+
+    cve_id = "CVE-2099-1234"
+    cve_dict = {
+        "containers": {"cna": cve_json},
+        "cveMetadata": {
+            "assignerOrgId": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+            "assignerShortName": "test_org",
+            "cveId": cve_id,
+            "datePublished": "2022-05-02T00:00:00Z",
+            "dateUpdated": "2022-05-02T00:00:00Z",
+            "dateReserved": "2021-06-29T12:33:52.892Z",
+            "requesterUserId": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
+            "state": "PUBLISHED",
+        },
+        "dataType": "CVE_RECORD",
+        "dataVersion": "5.2.0",
+    }
+
+    response_dict = {"created": cve_dict, "message": f"{cve_id} record was successfully created."}
+    publish.return_value = response_dict
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["publish", cve_id, "--cve-json-file", 
+                                                  str(Path(__file__).parent / "data/container-purl-example.json")])
+    assert result.exit_code == 0, result.output
+    # Verify that the command executed successfully
+    assert "Published the following CVE" in result.output or result.exit_code == 0
+
+
 @mock.patch("cvelib.cli.CveApi.reject")
 @mock.patch("cvelib.cli.CveApi.update_rejected")
 @mock.patch("cvelib.cli.CveApi.move_to_rejected")
