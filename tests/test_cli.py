@@ -834,6 +834,243 @@ def test_show_org():
         )
 
 
+def test_registry_user_show():
+    user_data = {
+        "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+        "username": "test@user",
+        "status": "inactive",
+        "name": {"first": "Test", "last": "User"},
+        "authority": {"active_roles": ["ADMIN"]},
+        "created": "2021-04-22T02:09:08.823Z",
+        "last_updated": "2021-05-26T19:28:52.766Z",
+    }
+    with mock.patch("cvelib.cli.CveApi.show_user") as show_user:
+        show_user.return_value = user_data
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test User — test@user\n"
+            "├─ Active:\tNo\n"
+            "├─ Roles:\tADMIN\n"
+            "├─ Created:\tThu Apr 22 02:09:08 2021 +0000\n"
+            "└─ Modified:\tWed May 26 19:28:52 2021 +0000\n"
+        )
+
+
+def test_registry_user_list():
+    users = [
+        {
+            "UUID": "fe12571e-4a47-4272-9cc4-c61802c05356",
+            "username": "hello@world",
+            "status": "active",
+            "name": {"first": "Hello", "last": "World"},
+            "authority": {"active_roles": ["ADMIN"]},
+            "created": "2021-05-26T19:27:44.567Z",
+            "last_updated": "2021-05-26T19:28:52.766Z",
+        },
+        {
+            "UUID": "cb55b254-cf8f-46f6-bfbf-fc1d71ba439a",
+            "username": "foo",
+            "status": "inactive",
+            "authority": {"active_roles": []},
+            "created": "2021-05-26T19:27:24.366Z",
+            "last_updated": "2021-05-26T19:32:57.857Z",
+        },
+    ]
+    with mock.patch("cvelib.cli.CveApi.list_users") as list_users:
+        list_users.return_value = users
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["org", "users"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "USERNAME      NAME          ROLES   ACTIVE   CREATED                          "
+            "MODIFIED\n"
+            "foo           None          None    No       Wed May 26 19:27:24 2021 +0000   "
+            "Wed May 26 19:32:57 2021 +0000\n"
+            "hello@world   Hello World   ADMIN   Yes      Wed May 26 19:27:44 2021 +0000   "
+            "Wed May 26 19:28:52 2021 +0000\n"
+        )
+
+
+def test_registry_show_org():
+    org = {
+        "UUID": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+        "short_name": "test_org",
+        "long_name": "Test Org",
+        "authority": ["CNA"],
+        "id_quota": 1000,
+        "created": "2021-04-21T02:09:07.389Z",
+        "last_updated": "2021-04-21T02:09:07.389Z",
+    }
+    with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
+        show_org.return_value = org
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["org"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test Org — test_org\n"
+            "├─ Roles:\tCNA\n"
+            "├─ Created:\tWed Apr 21 02:09:07 2021 +0000\n"
+            "└─ Modified:\tWed Apr 21 02:09:07 2021 +0000\n"
+        )
+
+
+@mock.patch("cvelib.cli.CveApi.revoke_user_role")
+@mock.patch("cvelib.cli.CveApi.grant_user_role")
+@mock.patch("cvelib.cli.CveApi.update_user")
+def test_registry_user_update(update_user, grant_user_role, revoke_user_role):
+    update_user.return_value = {"message": "updated", "updated": {"username": "new@user"}}
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        DEFAULT_OPTS
+        + [
+            "user",
+            "update",
+            "-u",
+            "test@user",
+            "--mark-inactive",
+            "--new-username",
+            "new@user",
+            "--name-first",
+            "New",
+            "--add-role",
+            "ADMIN",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == "User updated.\n"
+    grant_user_role.assert_called_once_with("test@user", "ADMIN")
+    revoke_user_role.assert_not_called()
+    update_user.assert_called_once_with(
+        "test@user", status="inactive", username="new@user", name={"first": "New"}
+    )
+
+
+@mock.patch("cvelib.cli.CveApi.update_user")
+@mock.patch("cvelib.cli.CveApi.revoke_user_role")
+def test_registry_user_update_role_only(revoke_user_role, update_user):
+    revoke_user_role.return_value = {"message": "Role ADMIN revoked from user test@user."}
+    runner = CliRunner()
+    result = runner.invoke(
+        cli, DEFAULT_OPTS + ["user", "update", "-u", "test@user", "--remove-role", "ADMIN", "--raw"]
+    )
+    assert result.exit_code == 0, result.output
+    assert json.loads(result.output) == {"message": "Role ADMIN revoked from user test@user."}
+    revoke_user_role.assert_called_once_with("test@user", "ADMIN")
+    update_user.assert_not_called()
+
+
+@mock.patch("cvelib.cli.CveApi.update_user")
+def test_legacy_user_update(update_user):
+    update_user.return_value = {"message": "updated"}
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        DEFAULT_OPTS
+        + [
+            "--legacy",
+            "user",
+            "update",
+            "-u",
+            "test@user",
+            "--mark-active",
+            "--name-last",
+            "User",
+            "--add-role",
+            "ADMIN",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    assert result.output == "User updated.\n"
+    update_user.assert_called_once_with(
+        "test@user", **{"active": "true", "name.last": "User", "active_roles.add": "ADMIN"}
+    )
+
+
+@mock.patch("cvelib.cli.CveApi.create_user")
+def test_registry_user_create(create_user):
+    create_user.return_value = {
+        "created": {
+            "username": "new@user",
+            "name": {"first": "New"},
+            "authority": {"active_roles": ["ADMIN"]},
+            "secret": "new-key",
+            "created": "2021-04-22T02:09:08.823Z",
+            "last_updated": "2021-04-22T02:09:08.823Z",
+        }
+    }
+    runner = CliRunner()
+    result = runner.invoke(
+        cli,
+        DEFAULT_OPTS
+        + ["user", "create", "-u", "new@user", "--name-first", "New", "--role", "ADMIN"],
+    )
+    assert result.exit_code == 0, result.output
+    create_user.assert_called_once_with(
+        username="new@user",
+        status="active",
+        name={"first": "New"},
+        authority={"active_roles": ["ADMIN"]},
+    )
+    assert "├─ API key:\tnew-key\n" in result.output
+    # The registry create response has no status; it is shown as unknown rather than failing.
+    assert "├─ Active:\tN/A\n" in result.output
+
+
+@mock.patch("cvelib.cli.CveApi.create_user")
+def test_legacy_user_create(create_user):
+    create_user.return_value = {
+        "created": {
+            "username": "new@user",
+            "active": True,
+            "authority": {"active_roles": []},
+            "secret": "new-key",
+            "time": {"created": "2021-04-22T02:09:08.823Z", "modified": "2021-04-22T02:09:08.823Z"},
+        }
+    }
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["--legacy", "user", "create", "-u", "new@user"])
+    assert result.exit_code == 0, result.output
+    create_user.assert_called_once_with(username="new@user")
+
+
+@mock.patch("cvelib.cli.CveApi.delete_user")
+def test_registry_user_delete(delete_user):
+    delete_user.return_value = {"message": "test@user was successfully deleted."}
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["user", "delete", "-u", "test@user"], input="y\n")
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "You are about to delete the test@user user from the test_org org.\n\n"
+        "This action cannot be undone.\n"
+        "Do you want to continue? [y/N]: y\n\n"
+        "User deleted.\n"
+    )
+    delete_user.assert_called_once_with("test@user")
+
+
+@mock.patch("cvelib.cli.CveApi.delete_user")
+def test_registry_user_delete_abort(delete_user):
+    # Confirmation is required even without -i/--interactive.
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["user", "delete", "-u", "test@user"], input="n\n")
+    assert result.exit_code == 0, result.output
+    assert "This action cannot be undone." in result.output
+    assert result.output.endswith("Exiting...\n")
+    delete_user.assert_not_called()
+
+
+@mock.patch("cvelib.cli.CveApi.delete_user")
+def test_legacy_user_delete_not_supported(delete_user):
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["--legacy", "user", "delete", "-u", "test@user"])
+    assert result.exit_code == 2
+    assert "Deleting users is not supported by the legacy endpoints." in result.output
+    delete_user.assert_not_called()
+
+
 def test_validate_good():
     runner = CliRunner()
     example_cve_file = str(Path(__file__).parent / "data/CVEv5_basic-example.json")
