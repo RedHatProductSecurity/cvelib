@@ -84,8 +84,13 @@ class CveApi:
         RECORD_DOES_NOT_EXIST = "CVE_RECORD_DNE"
 
     def __init__(
-        self, username: str, org: str, api_key: str, env: str = "prod", url: Optional[str] = None,
-        use_legacy_endpoints: bool = False
+        self,
+        username: str,
+        org: str,
+        api_key: str,
+        env: str = "prod",
+        url: Optional[str] = None,
+        use_legacy_endpoints: bool = False,
     ) -> None:
         self.username = username
         self.org = org
@@ -98,18 +103,19 @@ class CveApi:
         self.url = url
 
     def _org_path(self, path_suffix: str = "") -> str:
-        """Build organization endpoint path, using registry or legacy endpoints based on configuration."""
+        """Build an org endpoint path, using registry or legacy endpoints based on configuration."""
         if self.use_legacy_endpoints:
             return f"org/{self.org}{path_suffix}"
         else:
             return f"registry/org/{self.org}{path_suffix}"
 
     def _user_path(self, username: str, path_suffix: str = "") -> str:
-        """Build user endpoint path, using registry or legacy endpoints based on configuration."""
+        """Build a user endpoint path, using registry or legacy endpoints based on configuration."""
+        return self._org_path(f"/user/{username}{path_suffix}")
+
+    def _require_registry(self, action: str) -> None:
         if self.use_legacy_endpoints:
-            return f"org/{self.org}/user/{username}{path_suffix}"
-        else:
-            return f"registry/org/{self.org}/user/{username}{path_suffix}"
+            raise ValueError(f"{action} is only supported by the registry endpoints")
 
     def _http_request(self, method: str, path: str, **kwargs) -> requests.Response:
         url = urljoin(self.url, path)
@@ -155,6 +161,9 @@ class CveApi:
 
     def _put(self, path: str, **kwargs) -> requests.Response:
         return self._http_request("put", path, **kwargs)
+
+    def _delete(self, path: str, **kwargs) -> requests.Response:
+        return self._http_request("delete", path, **kwargs)
 
     @staticmethod
     def _extract_cna_container(cve_json: dict) -> dict:
@@ -374,13 +383,67 @@ class CveApi:
         return self._post(self._org_path("/user"), json=user_data).json()
 
     def update_user(self, username, **user_data: dict) -> dict:
-        return self._put(self._user_path(username), params=user_data).json()
+        """Update a user.
+
+        The legacy endpoint accepts flat query parameters (e.g. `name.first`, `active_roles.add`).
+
+        The registry endpoint replaces the full user document, so the current user data is fetched
+        and the given (nested) fields, e.g. `name={"first": "Jane"}` or `status="inactive"`, are
+        merged into it before it is sent back.
+        """
+        if self.use_legacy_endpoints:
+            return self._put(self._user_path(username), params=user_data).json()
+
+        user = self.show_user(username)
+        for field in ("secret", "created", "last_updated"):
+            user.pop(field, None)
+        for key, value in user_data.items():
+            if isinstance(value, dict) and isinstance(user.get(key), dict):
+                user[key] = {**user[key], **value}
+            else:
+                user[key] = value
+        return self._put(self._user_path(username), json=user).json()
+
+    def grant_user_role(self, username: str, role: str) -> dict:
+        self._require_registry("Granting a role")
+        return self._post(self._user_path(username, "/grant-role"), json={"role": role}).json()
+
+    def revoke_user_role(self, username: str, role: str) -> dict:
+        self._require_registry("Revoking a role")
+        return self._post(self._user_path(username, "/revoke-role"), json={"role": role}).json()
+
+    def delete_user(self, username: str) -> dict:
+        """Delete a user; restricted to the Secretariat."""
+        self._require_registry("Deleting a user")
+        return self._delete(self._user_path(username)).json()
 
     def list_users(self) -> Iterator[dict]:
         return self._get_paged(self._org_path("/users"), page_data_attr="users", params={})
 
-    def show_org(self) -> dict:
+    def show_org(self, expand_users: bool = False) -> dict:
+        if expand_users:
+            self._require_registry("Expanding org users")
+            return self._get(self._org_path(), params={"expand": "users"}).json()
         return self._get(self._org_path()).json()
+
+    def update_org(self, **org_data: dict) -> dict:
+        """Update your organization.
+
+        Fields are merged into the existing org data. Some fields can only be changed by the
+        Secretariat, and others require joint approval from the Secretariat.
+        """
+        self._require_registry("Updating an org")
+        return self._put(self._org_path(), json=org_data).json()
+
+    def update_org_conversation(
+        self, index: int, body: str, visibility: Optional[str] = None
+    ) -> dict:
+        """Update the message body (or, for the Secretariat, visibility) of an org conversation."""
+        self._require_registry("Updating an org conversation")
+        conversation_data = {"body": body}
+        if visibility:
+            conversation_data["visibility"] = visibility
+        return self._put(self._org_path(f"/conversation/{index}"), json=conversation_data).json()
 
     def ping(self) -> Optional[requests.exceptions.RequestException]:
         """Check the CVE API status.

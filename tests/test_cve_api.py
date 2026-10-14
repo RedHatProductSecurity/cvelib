@@ -199,7 +199,9 @@ class TestRegistryEndpoints:
             cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
 
             cve_api.create_user(username="new_user@example.com")
-            post_mock.assert_called_with("registry/org/test_org/user", json={"username": "new_user@example.com"})
+            post_mock.assert_called_with(
+                "registry/org/test_org/user", json={"username": "new_user@example.com"}
+            )
 
     def test_create_user_uses_legacy_endpoint(self):
         """Test that create_user uses org endpoint when legacy flag is set"""
@@ -210,7 +212,9 @@ class TestRegistryEndpoints:
             )
 
             cve_api.create_user(username="new_user@example.com")
-            post_mock.assert_called_with("org/test_org/user", json={"username": "new_user@example.com"})
+            post_mock.assert_called_with(
+                "org/test_org/user", json={"username": "new_user@example.com"}
+            )
 
     def test_list_users_uses_registry_endpoint(self):
         """Test that list_users uses registry/org endpoint by default"""
@@ -219,7 +223,9 @@ class TestRegistryEndpoints:
             cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
 
             list(cve_api.list_users())
-            get_paged_mock.assert_called_with("registry/org/test_org/users", page_data_attr="users", params={})
+            get_paged_mock.assert_called_with(
+                "registry/org/test_org/users", page_data_attr="users", params={}
+            )
 
     def test_list_users_uses_legacy_endpoint(self):
         """Test that list_users uses org endpoint when legacy flag is set"""
@@ -230,7 +236,9 @@ class TestRegistryEndpoints:
             )
 
             list(cve_api.list_users())
-            get_paged_mock.assert_called_with("org/test_org/users", page_data_attr="users", params={})
+            get_paged_mock.assert_called_with(
+                "org/test_org/users", page_data_attr="users", params={}
+            )
 
     def test_show_org_uses_registry_endpoint(self):
         """Test that show_org uses registry/org endpoint by default"""
@@ -251,3 +259,126 @@ class TestRegistryEndpoints:
 
             cve_api.show_org()
             get_mock.assert_called_with("org/test_org")
+
+    def test_update_user_uses_legacy_query_params(self):
+        """Test that update_user sends flat query params to the legacy endpoint"""
+        with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            cve_api.update_user("jane@example.com", **{"name.first": "Jane", "active": "false"})
+            put_mock.assert_called_with(
+                "org/test_org/user/jane@example.com",
+                params={"name.first": "Jane", "active": "false"},
+            )
+
+    def test_update_user_sends_merged_registry_user_document(self):
+        """Test that update_user merges changes into the current user and sends it as JSON"""
+        current_user = {
+            "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+            "username": "jane@example.com",
+            "status": "active",
+            "name": {"first": "Jane", "last": "Doe"},
+            "authority": {"active_roles": ["ADMIN"]},
+            "secret": "hashed",
+            "created": "2021-04-22T02:09:08.823Z",
+            "last_updated": "2021-04-22T02:09:08.823Z",
+        }
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+                get_mock.return_value.json.return_value = current_user
+                cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+                cve_api.update_user("jane@example.com", name={"last": "Smith"}, status="inactive")
+                get_mock.assert_called_with("registry/org/test_org/user/jane@example.com")
+                put_mock.assert_called_with(
+                    "registry/org/test_org/user/jane@example.com",
+                    json={
+                        "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+                        "username": "jane@example.com",
+                        "status": "inactive",
+                        "name": {"first": "Jane", "last": "Smith"},
+                        "authority": {"active_roles": ["ADMIN"]},
+                    },
+                )
+
+    def test_grant_and_revoke_user_role(self):
+        """Test that role changes use the registry grant-role/revoke-role endpoints"""
+        with mock.patch("cvelib.cve_api.CveApi._post") as post_mock:
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.grant_user_role("jane@example.com", "ADMIN")
+            post_mock.assert_called_with(
+                "registry/org/test_org/user/jane@example.com/grant-role", json={"role": "ADMIN"}
+            )
+
+            cve_api.revoke_user_role("jane@example.com", "ADMIN")
+            post_mock.assert_called_with(
+                "registry/org/test_org/user/jane@example.com/revoke-role", json={"role": "ADMIN"}
+            )
+
+    def test_delete_user_uses_registry_endpoint(self):
+        """Test that delete_user uses the registry user endpoint"""
+        with mock.patch("cvelib.cve_api.CveApi._delete") as delete_mock:
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.delete_user("jane@example.com")
+            delete_mock.assert_called_with("registry/org/test_org/user/jane@example.com")
+
+    def test_show_org_expand_users(self):
+        """Test that show_org can request expanded user data"""
+        with mock.patch("cvelib.cve_api.CveApi._get") as get_mock:
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.show_org(expand_users=True)
+            get_mock.assert_called_with("registry/org/test_org", params={"expand": "users"})
+
+    def test_update_org_uses_registry_endpoint(self):
+        """Test that update_org sends org data as JSON to the registry org endpoint"""
+        with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.update_org(long_name="Test Org", contact_info={"emails": ["a@example.com"]})
+            put_mock.assert_called_with(
+                "registry/org/test_org",
+                json={"long_name": "Test Org", "contact_info": {"emails": ["a@example.com"]}},
+            )
+
+    def test_update_org_conversation_uses_registry_endpoint(self):
+        """Test that update_org_conversation sends the conversation update as JSON"""
+        with mock.patch("cvelib.cve_api.CveApi._put") as put_mock:
+            cve_api = CveApi(username="test_user", org="test_org", api_key="test_key")
+
+            cve_api.update_org_conversation(0, "Updated message")
+            put_mock.assert_called_with(
+                "registry/org/test_org/conversation/0", json={"body": "Updated message"}
+            )
+
+            cve_api.update_org_conversation(1, "Updated message", visibility="private")
+            put_mock.assert_called_with(
+                "registry/org/test_org/conversation/1",
+                json={"body": "Updated message", "visibility": "private"},
+            )
+
+    @pytest.mark.parametrize(
+        "call",
+        [
+            lambda api: api.grant_user_role("jane@example.com", "ADMIN"),
+            lambda api: api.revoke_user_role("jane@example.com", "ADMIN"),
+            lambda api: api.delete_user("jane@example.com"),
+            lambda api: api.show_org(expand_users=True),
+            lambda api: api.update_org(long_name="Test Org"),
+            lambda api: api.update_org_conversation(0, "Updated message"),
+        ],
+    )
+    def test_registry_only_methods_reject_legacy_mode(self, call):
+        """Test that registry-only methods raise in legacy mode without making a request"""
+        with mock.patch("cvelib.cve_api.CveApi._http_request") as request_mock:
+            cve_api = CveApi(
+                username="test_user", org="test_org", api_key="test_key", use_legacy_endpoints=True
+            )
+
+            with pytest.raises(ValueError, match="only supported by the registry endpoints"):
+                call(cve_api)
+            request_mock.assert_not_called()

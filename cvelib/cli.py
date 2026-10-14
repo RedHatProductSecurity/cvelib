@@ -4,7 +4,7 @@ import sys
 from collections import defaultdict
 from datetime import date, datetime, timezone
 from functools import wraps
-from typing import Any, Callable, DefaultDict, List, Optional, Sequence, TextIO, Union
+from typing import Any, Callable, DefaultDict, List, Optional, Sequence, TextIO, Tuple, Union
 
 import click
 import requests
@@ -130,10 +130,36 @@ def print_user(user: dict) -> None:
     if "secret" in user:
         click.echo(f"├─ API key:\t{user['secret']}")
 
-    click.echo(f"├─ Active:\t{bool_to_text(user['active'])}")
-    click.echo(f"├─ Roles:\t{', '.join(user['authority']['active_roles']) or 'None'}")
-    click.echo(f"├─ Created:\t{human_ts(user['time']['created'])}")
-    click.echo(f"└─ Modified:\t{human_ts(user['time']['modified'])}")
+    created, modified = get_timestamps(user)
+    click.echo(f"├─ Active:\t{bool_to_text(is_user_active(user))}")
+    click.echo(f"├─ Roles:\t{', '.join(get_roles(user)) or 'None'}")
+    click.echo(f"├─ Created:\t{human_ts(created)}")
+    click.echo(f"└─ Modified:\t{human_ts(modified)}")
+
+
+def is_user_active(user_data: dict) -> Optional[bool]:
+    # Legacy user data has an `active` boolean; registry user data has a `status` string.
+    if "active" in user_data:
+        return user_data["active"]
+    if "status" in user_data:
+        return user_data["status"] == "active"
+    return None
+
+
+def get_roles(data: dict) -> List[str]:
+    # Legacy user/org data and registry user data list roles under `authority.active_roles`;
+    # registry org data lists them directly under `authority`.
+    authority = data.get("authority") or []
+    if isinstance(authority, dict):
+        return authority.get("active_roles", [])
+    return authority
+
+
+def get_timestamps(data: dict) -> Tuple[str, str]:
+    # Legacy data nests timestamps under `time`; registry data has top-level timestamps.
+    if "time" in data:
+        return data["time"]["created"], data["time"]["modified"]
+    return data["created"], data["last_updated"]
 
 
 def get_full_name(user_data: dict) -> Optional[str]:
@@ -1094,11 +1120,41 @@ def update_user(ctx: click.Context, username: Optional[str], **opts_data: dict) 
             sys.exit(0)
         click.echo()
 
-    updated_user = cve_api.update_user(username, **user_updates)
+    if cve_api.use_legacy_endpoints:
+        updated_user = cve_api.update_user(username, **user_updates)
+    else:
+        updated_user = update_registry_user(cve_api, username, user_updates)
     if print_raw:
         print_json_data(updated_user)
     else:
         click.echo("User updated.")
+
+
+def update_registry_user(cve_api: CveApi, username: str, user_updates: dict) -> dict:
+    """Apply user updates (in the flat format of the legacy endpoint) using registry endpoints.
+
+    Role changes are made using the dedicated grant-role/revoke-role endpoints before any other
+    changes, since those may include renaming the user. All other changes are converted to the
+    nested registry user format and sent in a single update.
+    """
+    response: dict = {}
+    if "active_roles.add" in user_updates:
+        response = cve_api.grant_user_role(username, user_updates["active_roles.add"])
+    if "active_roles.remove" in user_updates:
+        response = cve_api.revoke_user_role(username, user_updates["active_roles.remove"])
+
+    registry_updates: DefaultDict = defaultdict(dict)
+    for key, value in user_updates.items():
+        if key == "active":
+            registry_updates["status"] = "active" if value == "true" else "inactive"
+        elif key == "new_username":
+            registry_updates["username"] = value
+        elif key.startswith("name."):
+            registry_updates["name"][key.replace("name.", "")] = value
+
+    if registry_updates:
+        response = cve_api.update_user(username, **registry_updates)
+    return response
 
 
 @show_user.command(name="create")
@@ -1121,8 +1177,13 @@ def create_user(
     Note: Once a user is created, they cannot be removed, only marked as inactive. Only create
     users when you really need them.
     """
+    cve_api = ctx.obj.cve_api
     user_data: DefaultDict = defaultdict(dict)
     user_data["username"] = username
+    if not cve_api.use_legacy_endpoints:
+        # The registry endpoint requires a status and a (possibly empty) name object.
+        user_data["status"] = "active"
+        user_data["name"] = {}
 
     if name_first:
         user_data["name"]["first"] = name_first
@@ -1148,7 +1209,6 @@ def create_user(
             sys.exit(0)
         click.echo()
 
-    cve_api = ctx.obj.cve_api
     created_user = cve_api.create_user(**user_data)["created"]
     if print_raw:
         print_json_data(created_user)
@@ -1157,6 +1217,41 @@ def create_user(
     click.echo("Created user:\n")
     print_user(created_user)
     click.echo("\nMake sure to copy the returned API key; you won't be able to access it again!")
+
+
+@show_user.command(name="delete")
+@click.option("-u", "--username", required=True, help="Username of the user being deleted.")
+@click.option("--raw", "print_raw", default=False, is_flag=True, help="Print response JSON.")
+@click.pass_context
+@handle_cve_api_error
+def delete_user(ctx: click.Context, username: str, print_raw: bool) -> None:
+    """Delete a user.
+
+    This action is restricted to the Secretariat and is not available with --legacy. To disable a
+    user in your organization, use `cve user update --mark-inactive`.
+
+    You are always asked to confirm the deletion, even without -i/--interactive.
+    """
+    cve_api = ctx.obj.cve_api
+    if cve_api.use_legacy_endpoints:
+        raise click.UsageError("Deleting users is not supported by the legacy endpoints.")
+
+    # Deletion is irreversible, so always confirm regardless of the interactive setting.
+    click.echo("You are about to delete the ", nl=False)
+    click.secho(username, bold=True, nl=False)
+    click.echo(" user from the ", nl=False)
+    click.secho(ctx.obj.org, bold=True, nl=False)
+    click.echo(" org.\n\nThis action cannot be undone.")
+    if not click.confirm("Do you want to continue?"):
+        click.echo("Exiting...")
+        sys.exit(0)
+    click.echo()
+
+    response_data = cve_api.delete_user(username)
+    if print_raw:
+        print_json_data(response_data)
+    else:
+        click.echo("User deleted.")
 
 
 @cli.group(name="org", invoke_without_command=True)
@@ -1174,10 +1269,12 @@ def show_org(ctx: click.Context, print_raw: bool) -> None:
         print_json_data(org_data)
         return
 
-    click.echo(f"{org_data['name']} — {org_data['short_name']}")
-    click.echo(f"├─ Roles:\t{', '.join(org_data['authority']['active_roles']) or 'None'}")
-    click.echo(f"├─ Created:\t{human_ts(org_data['time']['created'])}")
-    click.echo(f"└─ Modified:\t{human_ts(org_data['time']['modified'])}")
+    created, modified = get_timestamps(org_data)
+    name = org_data.get("name") or org_data.get("long_name")
+    click.echo(f"{name} — {org_data['short_name']}")
+    click.echo(f"├─ Roles:\t{', '.join(get_roles(org_data)) or 'None'}")
+    click.echo(f"├─ Created:\t{human_ts(created)}")
+    click.echo(f"└─ Modified:\t{human_ts(modified)}")
 
 
 @show_org.command()
@@ -1197,14 +1294,15 @@ def users(ctx: click.Context, print_raw: bool, no_header: bool) -> None:
 
     lines = []
     for user in org_users:
+        created, modified = get_timestamps(user)
         lines.append(
             (
                 user["username"],
                 str(get_full_name(user)),
-                ", ".join(user["authority"]["active_roles"]) or "None",
-                bool_to_text(user["active"]),
-                human_ts(user["time"]["created"]),
-                human_ts(user["time"]["modified"]),
+                ", ".join(get_roles(user)) or "None",
+                bool_to_text(is_user_active(user)),
+                human_ts(created),
+                human_ts(modified),
             )
         )
     lines.sort(key=lambda x: x[0])  # Sort by username
