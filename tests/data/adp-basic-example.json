@@ -1,0 +1,11 @@
+{
+  "providerMetadata": {
+    "orgId": "12345678-9a55-4e29-8e61-d4ddf6d83e28",
+    "shortName": "adp-org"
+  },
+  "references": [
+    {
+      "url": "https://example.com/adp-analysis"
+    }
+  ]
+}

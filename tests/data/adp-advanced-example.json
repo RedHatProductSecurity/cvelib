@@ -1,0 +1,36 @@
+{
+  "providerMetadata": {
+    "orgId": "12345678-9a55-4e29-8e61-d4ddf6d83e28",
+    "shortName": "adp-org"
+  },
+  "affected": [
+    {
+      "vendor": "Example Corp",
+      "product": "Example Product",
+      "versions": [
+        {
+          "version": "1.0.0",
+          "status": "affected"
+        },
+        {
+          "version": "2.0.0",
+          "status": "unaffected"
+        }
+      ]
+    }
+  ],
+  "descriptions": [
+    {
+      "lang": "en",
+      "value": "Example ADP analysis of CVE vulnerability with additional details and insights."
+    }
+  ],
+  "references": [
+    {
+      "url": "https://example.com/adp-analysis"
+    },
+    {
+      "url": "https://example.com/additional-info"
+    }
+  ]
+}
