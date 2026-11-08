@@ -41,13 +41,15 @@ def validate_year(
     return value
 
 
-def human_ts(ts: str) -> str:
+def human_ts(ts: Optional[str]) -> str:
     """Return a consistent, human-readable datetime.
 
     If the format cannot be parsed against RFC3339 or ISO8601, return the original raw value.
 
     Note: this helper function should only be used for printing datetime values.
     """
+    if not ts:
+        return "N/A"
     dt = None
     for dt_format in (
         "%Y-%m-%dT%H:%M:%S",  # 2019-03-27T19:20:26
@@ -80,11 +82,11 @@ def print_cve_id(cve: dict) -> None:
             "├─ Reserved by:\t"
             f"{cve['requested_by'].get('user', 'n/a')} ({cve['requested_by']['cna']})"
         )
-        if "time" in cve:
-            click.echo(f"├─ Reserved on:\t{human_ts(cve['reserved'])}")
-            click.echo(f"└─ Updated on:\t{human_ts(cve['time']['modified'])}")
+        if "time" in cve and cve["time"]:
+            click.echo(f"├─ Reserved on:\t{human_ts(cve.get('reserved'))}")
+            click.echo(f"└─ Updated on:\t{human_ts(cve['time'].get('modified'))}")
         else:
-            click.echo(f"└─ Reserved on:\t{human_ts(cve['reserved'])}")
+            click.echo(f"└─ Reserved on:\t{human_ts(cve.get('reserved'))}")
     else:
         if "dateUpdated" in cve:
             click.echo(f"├─ Owning CNA:\t{cve['owning_cna']}")
@@ -130,10 +132,11 @@ def print_user(user: dict) -> None:
     if "secret" in user:
         click.echo(f"├─ API key:\t{user['secret']}")
 
+    user_time = user.get("time") or {}
     click.echo(f"├─ Active:\t{bool_to_text(user['active'])}")
     click.echo(f"├─ Roles:\t{', '.join(user['authority']['active_roles']) or 'None'}")
-    click.echo(f"├─ Created:\t{human_ts(user['time']['created'])}")
-    click.echo(f"└─ Modified:\t{human_ts(user['time']['modified'])}")
+    click.echo(f"├─ Created:\t{human_ts(user_time.get('created'))}")
+    click.echo(f"└─ Modified:\t{human_ts(user_time.get('modified'))}")
 
 
 def get_full_name(user_data: dict) -> Optional[str]:
@@ -893,7 +896,7 @@ def list_cves(
         elif key == "cve_id":
             cves.sort(key=lambda x: natural_cve_sort(x["cve_id"]))
         elif key == "reserved_ts":
-            cves.sort(key=lambda x: x["reserved"])
+            cves.sort(key=lambda x: x.get("reserved") or "")
         elif key == "state":
             cves.sort(key=lambda x: x["state"])
 
@@ -908,7 +911,7 @@ def list_cves(
                 cve["state"],
                 cve["owning_cna"],
                 f"{cve['requested_by'].get('user') or 'n/a'} ({cve['requested_by']['cna']})",
-                human_ts(cve["reserved"]),
+                human_ts(cve.get("reserved")),
             )
         )
     print_table(lines, highlight_header=not no_header)
@@ -1164,10 +1167,11 @@ def show_org(ctx: click.Context, print_raw: bool) -> None:
         print_json_data(org_data)
         return
 
+    org_time = org_data.get("time") or {}
     click.echo(f"{org_data['name']} — {org_data['short_name']}")
     click.echo(f"├─ Roles:\t{', '.join(org_data['authority']['active_roles']) or 'None'}")
-    click.echo(f"├─ Created:\t{human_ts(org_data['time']['created'])}")
-    click.echo(f"└─ Modified:\t{human_ts(org_data['time']['modified'])}")
+    click.echo(f"├─ Created:\t{human_ts(org_time.get('created'))}")
+    click.echo(f"└─ Modified:\t{human_ts(org_time.get('modified'))}")
 
 
 @show_org.command()
@@ -1187,14 +1191,15 @@ def users(ctx: click.Context, print_raw: bool, no_header: bool) -> None:
 
     lines = []
     for user in org_users:
+        user_time = user.get("time") or {}
         lines.append(
             (
                 user["username"],
                 str(get_full_name(user)),
                 ", ".join(user["authority"]["active_roles"]) or "None",
                 bool_to_text(user["active"]),
-                human_ts(user["time"]["created"]),
-                human_ts(user["time"]["modified"]),
+                human_ts(user_time.get("created")),
+                human_ts(user_time.get("modified")),
             )
         )
     lines.sort(key=lambda x: x[0])  # Sort by username

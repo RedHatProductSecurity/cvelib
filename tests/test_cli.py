@@ -859,3 +859,104 @@ def test_exit_on_help():
         assert result.exit_code == 0, result.output
         # The command is named after the function that is called.
         assert result.output.startswith("Usage: cli org")
+
+
+def test_show_org_missing_created_time():
+    org = {
+        "UUID": "19f229d4-f3d5-4605-bf93-521fa4499c06",
+        "authority": {"active_roles": ["CNA"]},
+        "name": "Test Org",
+        "policies": {"id_quota": 1000},
+        "short_name": "test_org",
+        "time": {"modified": "2021-04-21T02:09:07.389Z"},
+    }
+    with mock.patch("cvelib.cli.CveApi.show_org") as show_org:
+        show_org.return_value = org
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["org"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test Org — test_org\n"
+            "├─ Roles:\tCNA\n"
+            "├─ Created:\tN/A\n"
+            "└─ Modified:\tWed Apr 21 02:09:07 2021 +0000\n"
+        )
+
+
+def test_show_user_missing_time():
+    user_data = {
+        "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+        "active": True,
+        "authority": {"active_roles": ["ADMIN"]},
+        "name": {"first": "Test", "last": "User"},
+        "org_UUID": "304d44d8-3dd1-475d-83c1-5cbefb92b780",
+        "time": {},
+        "username": "test@user",
+    }
+    with mock.patch("cvelib.cli.CveApi.show_user") as show_user:
+        show_user.return_value = user_data
+        runner = CliRunner()
+        result = runner.invoke(cli, DEFAULT_OPTS + ["user"])
+        assert result.exit_code == 0, result.output
+        assert result.output == (
+            "Test User — test@user\n"
+            "├─ Active:\tYes\n"
+            "├─ Roles:\tADMIN\n"
+            "├─ Created:\tN/A\n"
+            "└─ Modified:\tN/A\n"
+        )
+
+
+def test_human_ts():
+    from cvelib.cli import human_ts
+
+    assert human_ts(None) == "N/A"
+    assert human_ts("") == "N/A"
+    assert human_ts("N/A") == "N/A"
+    assert human_ts("2021-04-21T02:09:07.389Z") == "Wed Apr 21 02:09:07 2021 +0000"
+
+
+@mock.patch("cvelib.cli.CveApi.show_cve_id")
+@mock.patch("cvelib.cli.CveApi.show_cve_record")
+def test_cve_id_show_missing_timestamps(show_cve_record, show_cve_id):
+    show_cve_id.return_value = {
+        "cve_id": "CVE-2099-1000",
+        "cve_year": "2099",
+        "owning_cna": "acme",
+        "requested_by": {"cna": "acme", "user": "jack@example.com"},
+        "state": "RESERVED",
+        "time": {"created": "2021-01-14T18:35:17.469Z"},
+    }
+
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["show", "CVE-2099-1000"])
+    assert result.exit_code == 0, result.output
+    assert result.output == (
+        "CVE-2099-1000\n"
+        "├─ State:\tRESERVED\n"
+        "├─ Owning CNA:\tacme\n"
+        "├─ Reserved by:\tjack@example.com (acme)\n"
+        "├─ Reserved on:\tN/A\n"
+        "└─ Updated on:\tN/A\n"
+    )
+    assert not show_cve_record.called
+
+
+@mock.patch("cvelib.cli.CveApi.list_users")
+def test_org_users_missing_timestamps(list_users):
+    list_users.return_value = [
+        {
+            "UUID": "ac821fed-cbfa-47ab-bcde-822d759c7902",
+            "active": True,
+            "authority": {"active_roles": ["ADMIN"]},
+            "name": {"first": "Test", "last": "User"},
+            "org_UUID": "304d44d8-3dd1-475d-83c1-5cbefb92b780",
+            "time": {},
+            "username": "test@user",
+        }
+    ]
+    runner = CliRunner()
+    result = runner.invoke(cli, DEFAULT_OPTS + ["org", "users"])
+    assert result.exit_code == 0, result.output
+    assert "test@user" in result.output
+    assert "N/A" in result.output
